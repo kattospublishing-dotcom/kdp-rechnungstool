@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+*.log
+
+# Local app data and generated invoices
+kdp-rechnungstool/server/data/*.sqlite
+kdp-rechnungstool/server/data/*.sqlite-*
+kdp-rechnungstool/server/data/exports/
+
+# Local OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
