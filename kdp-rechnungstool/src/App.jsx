@@ -24,10 +24,16 @@ export default function App() {
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [theme, setTheme] = useState(() => localStorage.getItem("kdp-theme") || "light");
   const selectedCustomer = useMemo(
     () => customers.find((customer) => String(customer.id) === String(form.marketplaceCustomerId)),
     [customers, form.marketplaceCustomerId]
   );
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("kdp-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     refreshData();
@@ -96,9 +102,19 @@ export default function App() {
           <h1>KDP Rechnungstool</h1>
           <p>Lokale Rechnungen fuer Amazon-KDP-Zahlungen</p>
         </div>
-        <div className="number-chip">
-          <span>Letzte Rechnung</span>
-          <strong>{settings?.last_invoice_number ?? "..."}</strong>
+        <div className="topbar-actions">
+          <button
+            className="theme-toggle"
+            type="button"
+            aria-pressed={theme === "dark"}
+            onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+          >
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
+          <div className="number-chip">
+            <span>Letzte Rechnung</span>
+            <strong>{settings?.last_invoice_number ?? "..."}</strong>
+          </div>
         </div>
       </header>
 
