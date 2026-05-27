@@ -9,7 +9,7 @@ const DEFAULT_CUSTOMERS = [
     addressLines: ["38 avenue John F. Kennedy", "L-1855 Luxembourg"],
     taxLabel: "VAT-No.",
     taxId: "LU 20944528",
-    serviceDescription: "KDP Buecher-Honorare amazon.de"
+    serviceDescription: "KDP Bücher-Honorare amazon.de"
   },
   {
     marketplace: "amazon.com",
@@ -18,7 +18,7 @@ const DEFAULT_CUSTOMERS = [
     addressLines: ["410 Terry Avenue North", "Seattle, WA 98109", "United States"],
     taxLabel: "Tax ID",
     taxId: "83-0417755",
-    serviceDescription: "KDP Buecher-Honorare amazon.com"
+    serviceDescription: "KDP Bücher-Honorare amazon.com"
   },
   {
     marketplace: "amazon.ca",
@@ -27,7 +27,7 @@ const DEFAULT_CUSTOMERS = [
     addressLines: ["410 Terry Avenue North", "Seattle, WA 98109", "United States"],
     taxLabel: "Tax ID",
     taxId: "83-0417755",
-    serviceDescription: "KDP Buecher-Honorare amazon.ca"
+    serviceDescription: "KDP Bücher-Honorare amazon.ca"
   },
   {
     marketplace: "amazon.co.uk",
@@ -36,7 +36,7 @@ const DEFAULT_CUSTOMERS = [
     addressLines: ["1 Principal Place", "Worship Street", "London EC2A 2FA", "United Kingdom"],
     taxLabel: "VAT-No.",
     taxId: "",
-    serviceDescription: "KDP Buecher-Honorare amazon.co.uk"
+    serviceDescription: "KDP Bücher-Honorare amazon.co.uk"
   }
 ];
 
@@ -110,7 +110,7 @@ function seedDefaults(db) {
   }
 
   const insertCustomer = db.prepare(`
-    insert or ignore into marketplace_customers (
+    insert into marketplace_customers (
       marketplace,
       display_name,
       company_name,
@@ -121,6 +121,14 @@ function seedDefaults(db) {
       active
     )
     values (@marketplace, @displayName, @companyName, @addressLinesJson, @taxLabel, @taxId, @serviceDescription, 1)
+    on conflict(marketplace) do update set
+      display_name = excluded.display_name,
+      company_name = excluded.company_name,
+      address_lines_json = excluded.address_lines_json,
+      tax_label = excluded.tax_label,
+      tax_id = excluded.tax_id,
+      service_description = excluded.service_description,
+      active = excluded.active
   `);
 
   for (const customer of DEFAULT_CUSTOMERS) {

@@ -15,3 +15,10 @@ test("stylesheet defines dark-mode theme tokens", () => {
   assert.match(cssSource, /--color-bg/);
   assert.match(cssSource, /--color-panel/);
 });
+
+test("invoice history links to Word download instead of showing local path", () => {
+  const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  assert.match(appSource, /href=\{`\/api\/invoices\/\$\{invoice\.id\}\/docx`\}/);
+  assert.match(appSource, /Word-Datei/);
+  assert.doesNotMatch(appSource, /output_docx_path/);
+});

@@ -1,22 +1,32 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   AlignmentType,
   BorderStyle,
   Document,
+  Footer,
+  ImageRun,
   Packer,
   Paragraph,
   Table,
   TableCell,
   TableRow,
   TextRun,
+  VerticalAlign,
   WidthType
 } from "docx";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const LOGO_PATH = path.join(__dirname, "assets", "kattos-logo.png");
+const BLUE = "115582";
+const BLACK = "000000";
 
 const MONTHS = [
   "Jan.",
   "Feb.",
-  "Maerz",
+  "März",
   "Apr.",
   "Mai",
   "Juni",
@@ -48,8 +58,8 @@ export async function createInvoiceDocx({ outputPath, invoiceNumber, invoiceDate
         {
           id: "Normal",
           name: "Normal",
-          run: { font: "Avenir Book", size: 20 },
-          paragraph: { spacing: { after: 120 } }
+          run: { font: "Avenir Book", size: 22, color: BLACK },
+          paragraph: { spacing: { after: 80 } }
         }
       ]
     },
@@ -57,31 +67,33 @@ export async function createInvoiceDocx({ outputPath, invoiceNumber, invoiceDate
       {
         properties: {
           page: {
-            margin: { top: 900, right: 900, bottom: 900, left: 900 }
+            size: { width: 11906, height: 16838 },
+            margin: { top: 1080, right: 1080, bottom: 1080, left: 1080 }
           }
         },
+        footers: {
+          default: footer()
+        },
         children: [
-          ...customerLines.map((line) => text(line)),
-          spacer(),
-          text("Christopher-Nicolas Nussbaum"),
-          text("Am Muehlbachdamm 10/1"),
-          text("2822 Bad Erlach"),
-          text("Tel +436703588425"),
-          text("kattospublishing@gmail.com"),
-          text("UID: ATU81259102"),
-          spacer(),
-          keyValue("Leistungszeitraum:", formatPeriod(payment.sales_period_start, payment.sales_period_end)),
-          keyValue("Zahlungsnummer:", payment.payment_number),
+          headerBlock(customerLines),
+          paragraphGap(560),
+          metaTable(formatPeriod(payment.sales_period_start, payment.sales_period_end), payment.payment_number),
+          paragraphGap(380),
           rightText(`Bad Erlach, ${formatLongDate(invoiceDate)}`),
           rightText(`Rechnungs-Nr.: ${invoiceNumber}`),
-          heading("Rechnung"),
+          paragraphGap(420),
+          new Paragraph({
+            spacing: { after: 240 },
+            children: [new TextRun({ text: "Rechnung", bold: true, size: 30, color: BLUE, font: "Avenir Book" })]
+          }),
           text("Sehr geehrte Damen und Herren,"),
           text("Wie vereinbart berechne ich Ihnen hiermit:"),
           invoiceTable(customer.service_description, amount),
-          spacer(),
+          paragraphGap(360),
           text("Sofern nicht anders angegeben, entspricht das Liefer-/Leistungsdatum dem Rechnungsdatum."),
-          text("* Hinweis gem. UstG: Steuerfrei durch Uebergang der Steuerschuld"),
-          text("Der Betrag wird per Ueberweisung beglichen.")
+          text("*Hinweis gem. UstG: Steuerfrei durch Übergang der Steuerschuld"),
+          paragraphGap(260),
+          text("Der Betrag wird per Überweisung beglichen.")
         ]
       }
     ]
@@ -91,45 +103,93 @@ export async function createInvoiceDocx({ outputPath, invoiceNumber, invoiceDate
   fs.writeFileSync(outputPath, buffer);
 }
 
-function text(value) {
-  return new Paragraph({ children: [new TextRun(String(value))] });
-}
-
-function rightText(value) {
-  return new Paragraph({
-    alignment: AlignmentType.RIGHT,
-    children: [new TextRun(String(value))]
+function headerBlock(customerLines) {
+  return new Table({
+    width: { size: 9360, type: WidthType.DXA },
+    borders: noBorders(),
+    rows: [
+      new TableRow({
+        children: [
+          noBorderCell({
+            width: 4300,
+            children: customerLines.flatMap((line, index) => [
+              new Paragraph({
+                spacing: { after: index === customerLines.length - 2 ? 260 : 60 },
+                children: [new TextRun({ text: line, bold: index === 0, font: "Avenir Book", size: 22 })]
+              })
+            ])
+          }),
+          noBorderCell({
+            width: 5060,
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                spacing: { after: 520 },
+                children: logoRun()
+              }),
+              ...senderLines().map((line, index) =>
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  spacing: { after: index === 5 ? 260 : 40 },
+                  children: [new TextRun({ text: line, font: "Avenir Book", size: 20, color: line.includes("@") ? "0563C1" : BLACK })]
+                })
+              )
+            ]
+          })
+        ]
+      })
+    ]
   });
 }
 
-function heading(value) {
-  return new Paragraph({
-    spacing: { before: 300, after: 180 },
-    children: [new TextRun({ text: value, bold: true, size: 32 })]
+function senderLines() {
+  return [
+    "Christopher-Nicolas Nussbaum",
+    "Am Mühlbachdamm 10/1",
+    "2822 Bad Erlach",
+    "Tel +436703588425",
+    "kattospublishing@gmail.com",
+    "",
+    "UID: ATU81259102"
+  ];
+}
+
+function logoRun() {
+  if (!fs.existsSync(LOGO_PATH)) return [];
+  return [
+    new ImageRun({
+      data: fs.readFileSync(LOGO_PATH),
+      transformation: { width: 150, height: 109 }
+    })
+  ];
+}
+
+function metaTable(period, paymentNumber) {
+  return new Table({
+    width: { size: 6200, type: WidthType.DXA },
+    borders: noBorders(),
+    rows: [
+      metaRow("Leistungszeitraum:", period),
+      metaRow("Zahlungsnummer:", paymentNumber)
+    ]
   });
 }
 
-function spacer() {
-  return new Paragraph({ text: "", spacing: { after: 180 } });
-}
-
-function keyValue(label, value) {
-  return new Paragraph({
-    children: [new TextRun({ text: `${label} `, bold: true }), new TextRun(value)]
+function metaRow(label, value) {
+  return new TableRow({
+    children: [
+      noBorderCell({ width: 2100, children: [text(label, { bold: true })] }),
+      noBorderCell({ width: 4100, children: [text(value)] })
+    ]
   });
 }
 
 function invoiceTable(description, amount) {
-  const borders = {
-    top: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-    bottom: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-    left: { style: BorderStyle.SINGLE, size: 1, color: "999999" },
-    right: { style: BorderStyle.SINGLE, size: 1, color: "999999" }
-  };
-  const widths = [900, 1000, 3700, 1700, 2000];
-
+  const borders = thinBorders(BLACK);
+  const widths = [978, 1115, 3544, 1701, 2003];
   return new Table({
-    width: { size: 9300, type: WidthType.DXA },
+    width: { size: 9341, type: WidthType.DXA },
+    borders,
     rows: [
       new TableRow({
         children: [
@@ -155,36 +215,139 @@ function invoiceTable(description, amount) {
           cell("", widths[1], false, AlignmentType.LEFT, borders),
           cell("Umsatzsteuer", widths[2], false, AlignmentType.LEFT, borders),
           cell("", widths[3], false, AlignmentType.RIGHT, borders),
-          cell("0,00 EUR *", widths[4], false, AlignmentType.RIGHT, borders)
+          cell("0,00€*", widths[4], false, AlignmentType.RIGHT, borders)
         ]
       }),
       new TableRow({
         children: [
           new TableCell({
             columnSpan: 4,
+            verticalAlign: VerticalAlign.CENTER,
             width: { size: widths.slice(0, 4).reduce((sum, width) => sum + width, 0), type: WidthType.DXA },
             borders,
-            children: [new Paragraph({ children: [new TextRun({ text: "Gesamtbetrag:", bold: true, color: "115582" })] })]
+            margins: cellMargins(),
+            children: [text("Gesamtbetrag:", { bold: true, color: BLUE })]
           }),
-          cell(`${amount} *`, widths[4], true, AlignmentType.RIGHT, borders, "115582")
+          cell(`${amount} *`, widths[4], true, AlignmentType.RIGHT, borders, BLUE)
         ]
       })
     ]
   });
 }
 
-function cell(value, width, bold, alignment, borders, color = "000000") {
-  return new TableCell({
-    width: { size: width, type: WidthType.DXA },
-    borders,
-    margins: { top: 120, bottom: 120, left: 120, right: 120 },
+function footer() {
+  return new Footer({
     children: [
-      new Paragraph({
-        alignment,
-        children: [new TextRun({ text: value, bold, color })]
+      new Table({
+        width: { size: 9360, type: WidthType.DXA },
+        borders: noBorders(),
+        rows: [
+          new TableRow({
+            children: [
+              noBorderCell({
+                width: 5200,
+                children: [
+                  text("Bankverbindung:", { color: "8A8A8A", size: 20 }),
+                  text("Kontoinhaber: Christopher-Nicolas Nussbaum", { color: "8A8A8A", size: 20 }),
+                  text("Institut: Erste Sparkasse", { color: "8A8A8A", size: 20 }),
+                  text("IBAN: AT88 2011 1829 6931 6404", { color: "8A8A8A", size: 20 }),
+                  text("BIC: GIBAATWWXXX", { color: "8A8A8A", size: 20 })
+                ]
+              }),
+              noBorderCell({
+                width: 4160,
+                children: [
+                  new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 620 },
+                    children: [new TextRun({ text: "Steuernummer: 09 309 / 4803", color: "8A8A8A", font: "Avenir Book", size: 20 })]
+                  })
+                ]
+              })
+            ]
+          })
+        ]
       })
     ]
   });
+}
+
+function text(value, options = {}) {
+  return new Paragraph({
+    spacing: { after: options.after ?? 80 },
+    children: [
+      new TextRun({
+        text: String(value),
+        bold: options.bold ?? false,
+        color: options.color ?? BLACK,
+        font: "Avenir Book",
+        size: options.size ?? 22
+      })
+    ]
+  });
+}
+
+function rightText(value) {
+  return new Paragraph({
+    alignment: AlignmentType.RIGHT,
+    spacing: { after: 70 },
+    children: [new TextRun({ text: String(value), font: "Avenir Book", size: 20 })]
+  });
+}
+
+function paragraphGap(after) {
+  return new Paragraph({ text: "", spacing: { after } });
+}
+
+function cell(value, width, bold, alignment, borders, color = BLACK) {
+  return new TableCell({
+    width: { size: width, type: WidthType.DXA },
+    verticalAlign: VerticalAlign.CENTER,
+    borders,
+    margins: cellMargins(),
+    children: [
+      new Paragraph({
+        alignment,
+        spacing: { after: 0 },
+        children: [new TextRun({ text: value, bold, color, font: "Avenir Book", size: 20 })]
+      })
+    ]
+  });
+}
+
+function noBorderCell({ width, children }) {
+  return new TableCell({
+    width: { size: width, type: WidthType.DXA },
+    borders: noBorders(),
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
+    children
+  });
+}
+
+function thinBorders(color) {
+  return {
+    top: { style: BorderStyle.SINGLE, size: 2, color },
+    bottom: { style: BorderStyle.SINGLE, size: 2, color },
+    left: { style: BorderStyle.SINGLE, size: 2, color },
+    right: { style: BorderStyle.SINGLE, size: 2, color },
+    insideHorizontal: { style: BorderStyle.SINGLE, size: 2, color },
+    insideVertical: { style: BorderStyle.SINGLE, size: 2, color }
+  };
+}
+
+function noBorders() {
+  return {
+    top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" }
+  };
+}
+
+function cellMargins() {
+  return { top: 80, bottom: 80, left: 120, right: 120 };
 }
 
 function formatPeriod(start, end) {

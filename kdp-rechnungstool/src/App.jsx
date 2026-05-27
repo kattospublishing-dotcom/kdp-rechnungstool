@@ -282,7 +282,11 @@ export default function App() {
                   <td>{invoice.display_name}</td>
                   <td>{invoice.payment_number}</td>
                   <td>{formatAmount(invoice.confirmed_eur_amount)}</td>
-                  <td className="path-cell">{invoice.output_docx_path}</td>
+                  <td>
+                    <a className="file-link" href={`/api/invoices/${invoice.id}/docx`}>
+                      Word-Datei
+                    </a>
+                  </td>
                 </tr>
               ))}
               {invoices.length === 0 && (

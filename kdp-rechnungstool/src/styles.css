@@ -345,6 +345,27 @@ th {
   overflow-wrap: anywhere;
 }
 
+.file-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-panel-soft);
+  color: var(--color-text);
+  padding: 7px 11px;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.file-link:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-hover);
+}
+
 @media (max-width: 920px) {
   .work-grid {
     grid-template-columns: 1fr;

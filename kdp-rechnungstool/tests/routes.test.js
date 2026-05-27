@@ -158,3 +158,41 @@ test("POST /api/invoices/:paymentId/finalize creates invoice and advances number
     server.close();
   }
 });
+
+test("GET /api/invoices/:invoiceId/docx downloads generated Word file", async () => {
+  const { app, db } = createTestServer();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const customer = db.prepare("select * from marketplace_customers where marketplace = ?").get("amazon.com");
+
+  try {
+    const createResponse = await fetch(`${baseUrl}/api/payments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        marketplaceCustomerId: customer.id,
+        paymentNumber: "100001196439600",
+        salesPeriodStart: "2026-03-01",
+        salesPeriodEnd: "2026-03-31",
+        paymentDate: "2026-05-29",
+        originalCurrency: "USD",
+        originalAmount: 22.42,
+        confirmedEurAmount: 20.12,
+        status: "confirmed"
+      })
+    });
+    const payment = await createResponse.json();
+    const finalizeResponse = await fetch(`${baseUrl}/api/invoices/${payment.id}/finalize`, { method: "POST" });
+    const invoice = await finalizeResponse.json();
+
+    const downloadResponse = await fetch(`${baseUrl}/api/invoices/${invoice.id}/docx`);
+    const bytes = await downloadResponse.arrayBuffer();
+
+    assert.equal(downloadResponse.status, 200);
+    assert.equal(downloadResponse.headers.get("content-type"), "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    assert.match(downloadResponse.headers.get("content-disposition"), /RE202614\.docx/);
+    assert.ok(bytes.byteLength > 1000);
+  } finally {
+    server.close();
+  }
+});

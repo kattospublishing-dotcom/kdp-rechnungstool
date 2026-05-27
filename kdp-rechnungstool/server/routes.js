@@ -106,6 +106,19 @@ export function createRouter(db) {
     res.json(invoices);
   });
 
+  router.get("/invoices/:invoiceId/docx", (req, res) => {
+    const invoice = db.prepare("select * from invoices where id = ?").get(req.params.invoiceId);
+    if (!invoice) {
+      return res.status(404).json({ error: "Rechnung nicht gefunden." });
+    }
+    if (!fs.existsSync(invoice.output_docx_path)) {
+      return res.status(404).json({ error: "Word-Datei nicht gefunden." });
+    }
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    res.setHeader("Content-Disposition", `attachment; filename="${invoice.invoice_number}.docx"`);
+    return res.sendFile(invoice.output_docx_path);
+  });
+
   router.post("/invoices/:paymentId/finalize", async (req, res) => {
     const payment = db.prepare("select * from payment_records where id = ?").get(req.params.paymentId);
     if (!payment) {
