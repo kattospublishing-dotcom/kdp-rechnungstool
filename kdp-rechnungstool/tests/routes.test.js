@@ -344,6 +344,26 @@ test("DELETE /api/invoices rolls counter back to baseline after several deletion
   }
 });
 
+test("GET /api/settings repairs stale invoice counter when no invoices remain", async () => {
+  const { app, db } = createTestServer();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    db.prepare("update settings set last_invoice_number = 'RE202615' where id = 1").run();
+
+    const response = await fetch(`${baseUrl}/api/settings`);
+    const settings = await response.json();
+    const storedSettings = db.prepare("select * from settings where id = 1").get();
+
+    assert.equal(response.status, 200);
+    assert.equal(settings.last_invoice_number, "RE202613");
+    assert.equal(storedSettings.last_invoice_number, "RE202613");
+  } finally {
+    server.close();
+  }
+});
+
 test("POST /api/invoices/:invoiceId/review moves invoice into history", async () => {
   const { app, db } = createTestServer();
   const server = app.listen(0);
@@ -380,6 +400,56 @@ test("POST /api/invoices/:invoiceId/review moves invoice into history", async ()
     assert.ok(reviewedInvoice.reviewed_at);
     assert.deepEqual(reviewQueue, []);
     assert.deepEqual(history.map((row) => row.invoice_number), ["RE202614"]);
+  } finally {
+    server.close();
+  }
+});
+
+test("GET /api/stats returns marketplace totals and month comparison", async () => {
+  const { app, db } = createTestServer();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const amazonCom = db.prepare("select * from marketplace_customers where marketplace = ?").get("amazon.com");
+  const amazonDe = db.prepare("select * from marketplace_customers where marketplace = ?").get("amazon.de");
+
+  try {
+    const now = new Date().toISOString();
+    const insert = db.prepare(`
+      insert into payment_records (
+        marketplace_customer_id,
+        payment_number,
+        sales_period_start,
+        sales_period_end,
+        payment_date,
+        original_currency,
+        original_amount,
+        exchange_rate,
+        confirmed_eur_amount,
+        status,
+        notes,
+        created_at,
+        updated_at
+      )
+      values (?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', '', ?, ?)
+    `);
+    insert.run(amazonCom.id, "p-jan", "2026-01-01", "2026-01-31", "2026-03-29", "USD", 10, 0.9, 9, now, now);
+    insert.run(amazonCom.id, "p-feb", "2026-02-01", "2026-02-28", "2026-04-29", "USD", 20, 0.9, 18, now, now);
+    insert.run(amazonDe.id, "p-feb-de", "2026-02-01", "2026-02-28", "2026-04-29", "EUR", 3, null, 3, now, now);
+
+    const response = await fetch(`${baseUrl}/api/stats`);
+    const stats = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(stats.byMarketplace.map((row) => [row.marketplace, row.totalEur]), [
+      ["Amazon.com", 27],
+      ["Amazon.de", 3]
+    ]);
+    assert.deepEqual(stats.months.map((row) => [row.month, row.totalEur]), [
+      ["2026-01", 9],
+      ["2026-02", 21]
+    ]);
+    assert.equal(stats.latestMonth.month, "2026-02");
+    assert.equal(stats.latestMonth.changeFromPreviousMonthPercent, 133.33);
   } finally {
     server.close();
   }

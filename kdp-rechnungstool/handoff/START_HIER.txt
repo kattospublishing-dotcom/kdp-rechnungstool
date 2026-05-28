@@ -1,0 +1,19 @@
+KDP Rechnungstool - Uebergabe an Claude Code
+
+Bitte zuerst diese Datei lesen:
+PROJEKTBESCHREIBUNG_CLAUDE_CODE.md
+
+Projektordner:
+kdp-rechnungstool
+
+Start:
+1. npm install
+2. npm run build
+3. npm run server
+4. http://127.0.0.1:5174 oeffnen
+
+Wichtig:
+- Keine generierten Rechnungen oder lokale SQLite-Datenbank committen.
+- Rechnungsnummernzaehler immer aus der Invoice-Tabelle ableiten.
+- Wenn keine Rechnungen vorhanden sind, muss der Zaehler RE202613 anzeigen.
+- User wuenscht als naechstes vor allem optische Weiterentwicklung und Dashboard-Integration.

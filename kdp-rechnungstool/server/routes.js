@@ -13,7 +13,7 @@ export function createRouter(db) {
   router.get("/health", (req, res) => res.json({ ok: true }));
 
   router.get("/settings", (req, res) => {
-    const settings = db.prepare("select * from settings where id = 1").get();
+    const settings = reconcileInvoiceCounter(db);
     res.json(settings);
   });
 
@@ -33,6 +33,52 @@ export function createRouter(db) {
       order by p.created_at desc
     `).all();
     res.json(payments);
+  });
+
+  router.get("/stats", (req, res) => {
+    const rows = db.prepare(`
+      select
+        c.display_name,
+        strftime('%Y-%m', p.sales_period_start) as month,
+        sum(p.confirmed_eur_amount) as total_eur
+      from payment_records p
+      join marketplace_customers c on c.id = p.marketplace_customer_id
+      where p.confirmed_eur_amount is not null
+      group by c.display_name, month
+      order by month asc, c.display_name asc
+    `).all();
+
+    const marketplaceTotals = new Map();
+    const monthTotals = new Map();
+    for (const row of rows) {
+      marketplaceTotals.set(row.display_name, roundMoney((marketplaceTotals.get(row.display_name) ?? 0) + row.total_eur));
+      monthTotals.set(row.month, roundMoney((monthTotals.get(row.month) ?? 0) + row.total_eur));
+    }
+
+    const byMarketplace = [...marketplaceTotals.entries()]
+      .map(([marketplace, totalEur]) => ({ marketplace, totalEur }))
+      .sort((a, b) => b.totalEur - a.totalEur || a.marketplace.localeCompare(b.marketplace));
+
+    const months = [...monthTotals.entries()]
+      .map(([month, totalEur]) => ({ month, totalEur }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+
+    const latest = months.at(-1) ?? null;
+    const previous = months.at(-2) ?? null;
+    const latestMonth = latest
+      ? {
+          ...latest,
+          previousMonthEur: previous?.totalEur ?? 0,
+          changeFromPreviousMonthPercent: percentageChange(previous?.totalEur ?? 0, latest.totalEur)
+        }
+      : null;
+
+    res.json({
+      byMarketplace,
+      months,
+      latestMonth,
+      yearTotalEur: roundMoney(months.reduce((sum, row) => sum + row.totalEur, 0))
+    });
   });
 
   router.post("/payments", (req, res) => {
@@ -294,6 +340,17 @@ export function createRouter(db) {
   return router;
 }
 
+export function reconcileInvoiceCounter(db) {
+  const settings = db.prepare("select * from settings where id = 1").get();
+  const invoiceNumbers = db.prepare("select invoice_number from invoices").all().map((row) => row.invoice_number);
+  const lastInvoiceNumber = highestInvoiceNumber(invoiceNumbers, settings) ?? baselineInvoiceNumber(settings);
+  if (lastInvoiceNumber !== settings.last_invoice_number) {
+    db.prepare("update settings set last_invoice_number = ? where id = 1").run(lastInvoiceNumber);
+    return { ...settings, last_invoice_number: lastInvoiceNumber };
+  }
+  return settings;
+}
+
 function imageBufferFromDataUrl(dataUrl) {
   const match = /^data:image\/[a-zA-Z0-9.+-]+;base64,(.+)$/.exec(dataUrl);
   if (!match) {
@@ -324,4 +381,13 @@ function highestInvoiceNumber(invoiceNumbers, settings) {
 
 function baselineInvoiceNumber(settings) {
   return `${settings.invoice_prefix}${settings.invoice_year}${String(BASE_INVOICE_SEQUENCE).padStart(2, "0")}`;
+}
+
+function roundMoney(value) {
+  return Math.round(Number(value) * 100) / 100;
+}
+
+function percentageChange(previousValue, currentValue) {
+  if (!previousValue) return currentValue ? 100 : 0;
+  return Math.round(((currentValue - previousValue) / previousValue) * 10000) / 100;
 }

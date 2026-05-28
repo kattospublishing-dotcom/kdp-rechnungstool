@@ -6,7 +6,8 @@ test("app exposes a persistent dark-mode toggle", () => {
   const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   assert.match(appSource, /localStorage\.getItem\("kdp-theme"\)/);
   assert.match(appSource, /document\.documentElement\.dataset\.theme/);
-  assert.match(appSource, /Dark Mode|Light Mode/);
+  assert.match(appSource, /aria-label=\{theme === "dark" \? "Light Mode aktivieren" : "Dark Mode aktivieren"\}/);
+  assert.match(appSource, /ThemeIcon/);
 });
 
 test("stylesheet defines dark-mode theme tokens", () => {
@@ -64,7 +65,7 @@ test("app exposes invoice review queue with confetti approval", () => {
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
   assert.match(appSource, /apiGet\("\/invoice-reviews"\)/);
   assert.match(appSource, /apiPost\(`\/invoices\/\$\{invoice\.id\}\/review`/);
-  assert.match(appSource, /<Confetti \/>/);
+  assert.match(appSource, /<Confetti key=\{confettiBurst\} \/>/);
   assert.match(cssSource, /\.confetti-layer/);
   assert.match(cssSource, /@keyframes confetti-fall/);
 });
@@ -76,4 +77,22 @@ test("app exposes screenshot upload import", () => {
   assert.match(appSource, /apiPost\("\/screenshot-imports"/);
   assert.match(appSource, /type="file"/);
   assert.match(cssSource, /\.upload-box/);
+});
+
+test("app exposes analytics cards and country revenue chart", () => {
+  const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(appSource, /apiGet\("\/stats"\)/);
+  assert.match(appSource, /Einnahmen nach Laendern/);
+  assert.match(appSource, /Umsatz zum Vormonat/);
+  assert.match(cssSource, /\.analytics-grid/);
+  assert.match(cssSource, /\.country-bar/);
+});
+
+test("preview pane can be docked outside the main workflow", () => {
+  const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(appSource, /className="workspace-grid"/);
+  assert.match(appSource, /className="main-flow"/);
+  assert.match(cssSource, /\.workspace-grid[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(430px, 520px\)/);
 });

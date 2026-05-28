@@ -22,7 +22,8 @@ export default function App() {
   const [payments, setPayments] = useState([]);
   const [invoiceReviews, setInvoiceReviews] = useState([]);
   const [invoices, setInvoices] = useState([]);
-  const [confetti, setConfetti] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [confettiBurst, setConfettiBurst] = useState(0);
   const [screenshotFile, setScreenshotFile] = useState(null);
   const [screenshotImporting, setScreenshotImporting] = useState(false);
   const [screenshotResult, setScreenshotResult] = useState(null);
@@ -51,18 +52,20 @@ export default function App() {
   }, []);
 
   async function refreshData() {
-    const [settingsData, customersData, paymentsData, reviewData, invoicesData] = await Promise.all([
+    const [settingsData, customersData, paymentsData, reviewData, invoicesData, statsData] = await Promise.all([
       apiGet("/settings"),
       apiGet("/customers"),
       apiGet("/payments"),
       apiGet("/invoice-reviews"),
-      apiGet("/invoices")
+      apiGet("/invoices"),
+      apiGet("/stats")
     ]);
     setSettings(settingsData);
     setCustomers(customersData);
     setPayments(paymentsData);
     setInvoiceReviews(reviewData);
     setInvoices(invoicesData);
+    setStats(statsData);
     if (!form.marketplaceCustomerId && customersData[0]) {
       setForm((current) => ({ ...current, marketplaceCustomerId: String(customersData[0].id) }));
     }
@@ -114,8 +117,7 @@ export default function App() {
     try {
       await apiPost(`/invoices/${invoice.id}/review`, {});
       setMessage(`Rechnung ${invoice.invoice_number} wurde geprueft und in die History uebernommen.`);
-      setConfetti(true);
-      window.setTimeout(() => setConfetti(false), 1800);
+      setConfettiBurst((current) => current + 1);
       await refreshData();
     } catch (err) {
       setError(readError(err));
@@ -169,7 +171,7 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      {confetti && <Confetti />}
+      {confettiBurst > 0 && <Confetti key={confettiBurst} />}
       <header className="topbar">
         <div>
           <h1>KDP Rechnungstool</h1>
@@ -179,10 +181,11 @@ export default function App() {
           <button
             className="theme-toggle"
             type="button"
+            aria-label={theme === "dark" ? "Light Mode aktivieren" : "Dark Mode aktivieren"}
             aria-pressed={theme === "dark"}
             onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
           >
-            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            <ThemeIcon mode={theme} />
           </button>
           <div className="number-chip">
             <span>Letzte Rechnung</span>
@@ -191,21 +194,25 @@ export default function App() {
         </div>
       </header>
 
-      <section className="summary-grid" aria-label="Uebersicht">
-        <Metric label="Entwuerfe" value={payments.filter((payment) => payment.status === "draft").length} />
-        <Metric label="EUR bestaetigt" value={payments.filter((payment) => payment.status === "confirmed").length} />
-        <Metric label="Zu pruefen" value={invoiceReviews.length} />
-        <Metric label="Rechnungen" value={invoices.length} />
-      </section>
+      <section className="workspace-grid">
+        <div className="main-flow">
+          <section className="summary-grid" aria-label="Uebersicht">
+            <Metric label="Entwuerfe" value={payments.filter((payment) => payment.status === "draft").length} />
+            <Metric label="EUR bestaetigt" value={payments.filter((payment) => payment.status === "confirmed").length} />
+            <Metric label="Zu pruefen" value={invoiceReviews.length} />
+            <Metric label="Rechnungen" value={invoices.length} />
+          </section>
 
-      {(message || error) && (
-        <section className={error ? "notice notice-error" : "notice"}>
-          {error || message}
-        </section>
-      )}
+          {(message || error) && (
+            <section className={error ? "notice notice-error" : "notice"}>
+              {error || message}
+            </section>
+          )}
 
-      <section className="dashboard-grid">
-        <div className="left-stack">
+          <AnalyticsPanel stats={stats} />
+
+          <section className="dashboard-grid">
+            <div className="left-stack">
           <section className="panel command-panel">
             <div className="panel-title">
               <h2>Automatisch importieren</h2>
@@ -323,6 +330,8 @@ export default function App() {
                 )}
               </tbody>
               </table>
+            </div>
+          </section>
             </div>
           </section>
         </div>
@@ -445,6 +454,63 @@ function Metric({ label, value }) {
   );
 }
 
+function AnalyticsPanel({ stats }) {
+  const countries = stats?.byMarketplace ?? [];
+  const maxTotal = Math.max(1, ...countries.map((row) => row.totalEur));
+  const monthChange = stats?.latestMonth?.changeFromPreviousMonthPercent ?? 0;
+  const changeClass = monthChange >= 0 ? "trend-positive" : "trend-negative";
+
+  return (
+    <section className="panel analytics-panel">
+      <div className="panel-title">
+        <h2>Statistik</h2>
+        <p>Einnahmen nach Laendern mit Entwicklung zum Vormonat.</p>
+      </div>
+      <div className="analytics-grid">
+        <div className="analytics-card">
+          <span>Gesamtumsatz</span>
+          <strong>{formatAmount(stats?.yearTotalEur ?? 0)}</strong>
+        </div>
+        <div className="analytics-card">
+          <span>Umsatz zum Vormonat</span>
+          <strong className={changeClass}>{formatPercent(monthChange)}</strong>
+        </div>
+        <div className="analytics-card">
+          <span>Aktueller Monat</span>
+          <strong>{stats?.latestMonth?.month ?? "-"}</strong>
+        </div>
+      </div>
+      <div className="country-chart" aria-label="Einnahmen nach Laendern">
+        <h3>Einnahmen nach Laendern</h3>
+        {countries.length > 0 ? (
+          countries.map((row) => (
+            <div className="country-bar" key={row.marketplace}>
+              <span>{row.marketplace}</span>
+              <div><i style={{ width: `${Math.max(8, (row.totalEur / maxTotal) * 100)}%` }} /></div>
+              <strong>{formatAmount(row.totalEur)}</strong>
+            </div>
+          ))
+        ) : (
+          <p className="muted-text">Noch keine bestaetigten EUR-Zahlungen fuer die Statistik.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ThemeIcon({ mode }) {
+  const isDark = mode === "dark";
+  return (
+    <svg className="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+      {isDark ? (
+        <path d="M12 3.5a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1Zm0 14a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11Zm0 3a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1ZM3.5 12a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2h-1a1 1 0 0 1-1-1Zm14 0a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2h-1a1 1 0 0 1-1-1ZM5.64 5.64a1 1 0 0 1 1.41 0l.71.71a1 1 0 1 1-1.41 1.41l-.71-.71a1 1 0 0 1 0-1.41Zm10.6 10.6a1 1 0 0 1 1.41 0l.71.71a1 1 0 0 1-1.41 1.41l-.71-.71a1 1 0 0 1 0-1.41Zm2.12-10.6a1 1 0 0 1 0 1.41l-.71.71a1 1 0 0 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0ZM7.76 16.24a1 1 0 0 1 0 1.41l-.71.71a1 1 0 0 1-1.41-1.41l.71-.71a1 1 0 0 1 1.41 0Z" />
+      ) : (
+        <path d="M20.2 14.6A8.2 8.2 0 0 1 9.4 3.8a.8.8 0 0 0-.86-1.21 10 10 0 1 0 12.87 12.87.8.8 0 0 0-1.21-.86Z" />
+      )}
+    </svg>
+  );
+}
+
 function Confetti() {
   return (
     <div className="confetti-layer" aria-hidden="true">
@@ -467,6 +533,11 @@ function StatusBadge({ status }) {
 function formatAmount(value) {
   if (value === null || value === undefined || value === "") return "-";
   return `${Number(value).toFixed(2).replace(".", ",")} EUR`;
+}
+
+function formatPercent(value) {
+  const sign = Number(value) > 0 ? "+" : "";
+  return `${sign}${Number(value).toFixed(2).replace(".", ",")} %`;
 }
 
 function readError(err) {
