@@ -107,7 +107,9 @@ test("preview pane can be docked outside the main workflow", () => {
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
   assert.match(appSource, /className="workspace-grid"/);
   assert.match(appSource, /className="main-flow"/);
-  assert.match(cssSource, /\.workspace-grid[\s\S]*width: min\(1500px, calc\(100% - 32px\)\)/);
-  assert.match(cssSource, /\.workspace-grid[\s\S]*grid-template-columns: minmax\(0, 0\.95fr\) minmax\(560px, 720px\)/);
-  assert.match(cssSource, /\.preview-stage[\s\S]*height: min\(62vh, 620px\)/);
+  assert.match(cssSource, /\.workspace-grid[\s\S]*width: min\(1720px, calc\(100% - 32px\)\)/);
+  assert.match(cssSource, /\.workspace-grid[\s\S]*grid-template-columns: minmax\(0, 0\.82fr\) minmax\(720px, 880px\)/);
+  assert.match(cssSource, /\.preview-panel[\s\S]*position: static/);
+  assert.doesNotMatch(cssSource, /\.preview-panel \{[\s\S]*position: sticky/);
+  assert.match(cssSource, /\.preview-stage[\s\S]*height: min\(58vh, 560px\)/);
 });
