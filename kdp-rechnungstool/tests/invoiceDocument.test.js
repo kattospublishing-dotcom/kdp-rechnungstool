@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { createInvoiceDocx, formatEuro, LOGO_TRANSFORMATION } from "../server/invoiceDocument.js";
+import { createInvoiceDocx, formatEuro, LOGO_TRANSFORMATION, PAGE_GEOMETRY } from "../server/invoiceDocument.js";
 
 test("formats euro amounts for German invoice display", () => {
   assert.equal(formatEuro(20.12), "20,12 EUR");
@@ -11,6 +11,15 @@ test("formats euro amounts for German invoice display", () => {
 
 test("uses square logo proportions from the invoice template", () => {
   assert.deepEqual(LOGO_TRANSFORMATION, { width: 150, height: 150 });
+});
+
+test("uses one shared right edge for invoice page content", () => {
+  assert.deepEqual(PAGE_GEOMETRY, {
+    width: 11906,
+    height: 16838,
+    margin: 1080,
+    contentWidth: 9746
+  });
 });
 
 test("creates a non-empty docx file", async () => {

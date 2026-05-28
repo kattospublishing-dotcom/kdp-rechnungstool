@@ -21,6 +21,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const LOGO_PATH = path.join(__dirname, "assets", "kattos-logo.png");
 export const LOGO_TRANSFORMATION = { width: 150, height: 150 };
+export const PAGE_GEOMETRY = {
+  width: 11906,
+  height: 16838,
+  margin: 1080,
+  contentWidth: 9746
+};
 const BLUE = "115582";
 const BLACK = "000000";
 
@@ -68,8 +74,13 @@ export async function createInvoiceDocx({ outputPath, invoiceNumber, invoiceDate
       {
         properties: {
           page: {
-            size: { width: 11906, height: 16838 },
-            margin: { top: 1080, right: 1080, bottom: 1080, left: 1080 }
+            size: { width: PAGE_GEOMETRY.width, height: PAGE_GEOMETRY.height },
+            margin: {
+              top: PAGE_GEOMETRY.margin,
+              right: PAGE_GEOMETRY.margin,
+              bottom: PAGE_GEOMETRY.margin,
+              left: PAGE_GEOMETRY.margin
+            }
           }
         },
         footers: {
@@ -106,7 +117,7 @@ export async function createInvoiceDocx({ outputPath, invoiceNumber, invoiceDate
 
 function headerBlock(customerLines) {
   return new Table({
-    width: { size: 9360, type: WidthType.DXA },
+    width: { size: PAGE_GEOMETRY.contentWidth, type: WidthType.DXA },
     borders: noBorders(),
     rows: [
       new TableRow({
@@ -121,7 +132,7 @@ function headerBlock(customerLines) {
             ])
           }),
           noBorderCell({
-            width: 5060,
+            width: PAGE_GEOMETRY.contentWidth - 4300,
             children: [
               new Paragraph({
                 alignment: AlignmentType.RIGHT,
@@ -187,9 +198,9 @@ function metaRow(label, value) {
 
 function invoiceTable(description, amount) {
   const borders = thinBorders(BLACK);
-  const widths = [978, 1115, 3544, 1701, 2003];
+  const widths = [978, 1115, 3770, 1780, 2103];
   return new Table({
-    width: { size: 9341, type: WidthType.DXA },
+    width: { size: PAGE_GEOMETRY.contentWidth, type: WidthType.DXA },
     borders,
     rows: [
       new TableRow({
@@ -240,13 +251,13 @@ function footer() {
   return new Footer({
     children: [
       new Table({
-        width: { size: 9360, type: WidthType.DXA },
+        width: { size: PAGE_GEOMETRY.contentWidth, type: WidthType.DXA },
         borders: noBorders(),
         rows: [
           new TableRow({
             children: [
               noBorderCell({
-                width: 5200,
+                width: 5400,
                 children: [
                   text("Bankverbindung:", { color: "8A8A8A", size: 20 }),
                   text("Kontoinhaber: Christopher-Nicolas Nussbaum", { color: "8A8A8A", size: 20 }),
@@ -256,7 +267,7 @@ function footer() {
                 ]
               }),
               noBorderCell({
-                width: 4160,
+                width: PAGE_GEOMETRY.contentWidth - 5400,
                 children: [
                   new Paragraph({
                     alignment: AlignmentType.CENTER,
