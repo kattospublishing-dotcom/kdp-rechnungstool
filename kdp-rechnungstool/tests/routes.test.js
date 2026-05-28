@@ -162,11 +162,18 @@ test("POST /api/invoices/:paymentId/finalize creates invoice and advances number
     const invoice = await finalizeResponse.json();
     const settings = db.prepare("select * from settings where id = 1").get();
     const updatedPayment = db.prepare("select * from payment_records where id = ?").get(payment.id);
+    const reviewQueueResponse = await fetch(`${baseUrl}/api/invoice-reviews`);
+    const reviewQueue = await reviewQueueResponse.json();
+    const historyResponse = await fetch(`${baseUrl}/api/invoices`);
+    const history = await historyResponse.json();
 
     assert.equal(finalizeResponse.status, 201);
     assert.equal(invoice.invoice_number, "RE202614");
+    assert.equal(invoice.reviewed_at, null);
     assert.equal(settings.last_invoice_number, "RE202614");
     assert.equal(updatedPayment.status, "invoiced");
+    assert.deepEqual(reviewQueue.map((row) => row.invoice_number), ["RE202614"]);
+    assert.deepEqual(history, []);
   } finally {
     server.close();
   }
@@ -250,6 +257,47 @@ test("DELETE /api/invoices/:invoiceId removes invoice, file, and rolls back coun
     assert.equal(deletedInvoice, undefined);
     assert.equal(updatedPayment.status, "confirmed");
     assert.equal(fs.existsSync(invoiceBeforeDelete.output_docx_path), false);
+  } finally {
+    server.close();
+  }
+});
+
+test("POST /api/invoices/:invoiceId/review moves invoice into history", async () => {
+  const { app, db } = createTestServer();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const customer = db.prepare("select * from marketplace_customers where marketplace = ?").get("amazon.com");
+
+  try {
+    const createResponse = await fetch(`${baseUrl}/api/payments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        marketplaceCustomerId: customer.id,
+        paymentNumber: "100001131175540",
+        salesPeriodStart: "2026-02-01",
+        salesPeriodEnd: "2026-02-28",
+        paymentDate: "2026-04-29",
+        originalCurrency: "USD",
+        originalAmount: 5.36,
+        exchangeRate: 0.8526,
+        confirmedEurAmount: 4.57,
+        status: "confirmed"
+      })
+    });
+    const payment = await createResponse.json();
+    const finalizeResponse = await fetch(`${baseUrl}/api/invoices/${payment.id}/finalize`, { method: "POST" });
+    const invoice = await finalizeResponse.json();
+
+    const reviewResponse = await fetch(`${baseUrl}/api/invoices/${invoice.id}/review`, { method: "POST" });
+    const reviewedInvoice = await reviewResponse.json();
+    const reviewQueue = await (await fetch(`${baseUrl}/api/invoice-reviews`)).json();
+    const history = await (await fetch(`${baseUrl}/api/invoices`)).json();
+
+    assert.equal(reviewResponse.status, 200);
+    assert.ok(reviewedInvoice.reviewed_at);
+    assert.deepEqual(reviewQueue, []);
+    assert.deepEqual(history.map((row) => row.invoice_number), ["RE202614"]);
   } finally {
     server.close();
   }

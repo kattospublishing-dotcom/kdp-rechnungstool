@@ -20,7 +20,9 @@ export default function App() {
   const [settings, setSettings] = useState(null);
   const [customers, setCustomers] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [invoiceReviews, setInvoiceReviews] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [confetti, setConfetti] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -40,15 +42,17 @@ export default function App() {
   }, []);
 
   async function refreshData() {
-    const [settingsData, customersData, paymentsData, invoicesData] = await Promise.all([
+    const [settingsData, customersData, paymentsData, reviewData, invoicesData] = await Promise.all([
       apiGet("/settings"),
       apiGet("/customers"),
       apiGet("/payments"),
+      apiGet("/invoice-reviews"),
       apiGet("/invoices")
     ]);
     setSettings(settingsData);
     setCustomers(customersData);
     setPayments(paymentsData);
+    setInvoiceReviews(reviewData);
     setInvoices(invoicesData);
     if (!form.marketplaceCustomerId && customersData[0]) {
       setForm((current) => ({ ...current, marketplaceCustomerId: String(customersData[0].id) }));
@@ -88,7 +92,21 @@ export default function App() {
     setMessage("");
     try {
       const invoice = await apiPost(`/invoices/${paymentId}/finalize`, {});
-      setMessage(`Rechnung ${invoice.invoice_number} wurde erzeugt.`);
+      setMessage(`Rechnung ${invoice.invoice_number} wurde erzeugt und liegt zur Pruefung bereit.`);
+      await refreshData();
+    } catch (err) {
+      setError(readError(err));
+    }
+  }
+
+  async function reviewInvoice(invoice) {
+    setError("");
+    setMessage("");
+    try {
+      await apiPost(`/invoices/${invoice.id}/review`, {});
+      setMessage(`Rechnung ${invoice.invoice_number} wurde geprueft und in die History uebernommen.`);
+      setConfetti(true);
+      window.setTimeout(() => setConfetti(false), 1800);
       await refreshData();
     } catch (err) {
       setError(readError(err));
@@ -114,6 +132,7 @@ export default function App() {
 
   return (
     <main className="app-shell">
+      {confetti && <Confetti />}
       <header className="topbar">
         <div>
           <h1>KDP Rechnungstool</h1>
@@ -138,6 +157,7 @@ export default function App() {
       <section className="summary-grid" aria-label="Uebersicht">
         <Metric label="Entwuerfe" value={payments.filter((payment) => payment.status === "draft").length} />
         <Metric label="EUR bestaetigt" value={payments.filter((payment) => payment.status === "confirmed").length} />
+        <Metric label="Zu pruefen" value={invoiceReviews.length} />
         <Metric label="Rechnungen" value={invoices.length} />
       </section>
 
@@ -279,6 +299,56 @@ export default function App() {
 
       <section className="panel history-panel">
         <div className="panel-title">
+          <h2>Rechnungen pruefen</h2>
+          <p>Erzeugte Rechnungen erscheinen erst nach deinem Haken in der History.</p>
+        </div>
+        <div className="table-wrap">
+          <table className="review-table">
+            <thead>
+              <tr>
+                <th>Geprueft</th>
+                <th>Rechnung</th>
+                <th>Marketplace</th>
+                <th>Zahlungsnummer</th>
+                <th>EUR</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoiceReviews.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td>
+                    <label className="review-check">
+                      <input type="checkbox" onChange={() => reviewInvoice(invoice)} />
+                      <span>OK</span>
+                    </label>
+                  </td>
+                  <td>{invoice.invoice_number}</td>
+                  <td>{invoice.display_name}</td>
+                  <td>{invoice.payment_number}</td>
+                  <td>{formatAmount(invoice.confirmed_eur_amount)}</td>
+                  <td className="invoice-actions">
+                    <a className="file-link" href={`/api/invoices/${invoice.id}/docx`}>
+                      Anzeigen
+                    </a>
+                    <button className="danger-button" type="button" onClick={() => deleteInvoice(invoice)}>
+                      Loeschen
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {invoiceReviews.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="empty-cell">Keine Rechnungen zur Pruefung.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="panel history-panel">
+        <div className="panel-title">
           <h2>Rechnungshistorie</h2>
           <p>Erzeugte Rechnungen bleiben nachvollziehbar gespeichert.</p>
         </div>
@@ -330,6 +400,16 @@ function Metric({ label, value }) {
     <div className="metric">
       <span>{label}</span>
       <strong>{value}</strong>
+    </div>
+  );
+}
+
+function Confetti() {
+  return (
+    <div className="confetti-layer" aria-hidden="true">
+      {Array.from({ length: 28 }, (_, index) => (
+        <span key={index} style={{ "--i": index, "--x": `${(index * 37) % 100}%` }} />
+      ))}
     </div>
   );
 }

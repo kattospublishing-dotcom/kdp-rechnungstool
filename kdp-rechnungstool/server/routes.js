@@ -101,7 +101,27 @@ export function createRouter(db) {
       from invoices i
       join payment_records p on p.id = i.payment_record_id
       join marketplace_customers c on c.id = p.marketplace_customer_id
+      where i.reviewed_at is not null
       order by i.invoice_number desc
+    `).all();
+    res.json(invoices);
+  });
+
+  router.get("/invoice-reviews", (req, res) => {
+    const invoices = db.prepare(`
+      select
+        i.*,
+        p.payment_number,
+        p.sales_period_start,
+        p.sales_period_end,
+        p.confirmed_eur_amount,
+        c.marketplace,
+        c.display_name
+      from invoices i
+      join payment_records p on p.id = i.payment_record_id
+      join marketplace_customers c on c.id = p.marketplace_customer_id
+      where i.reviewed_at is null
+      order by i.invoice_number asc
     `).all();
     res.json(invoices);
   });
@@ -152,6 +172,17 @@ export function createRouter(db) {
     });
   });
 
+  router.post("/invoices/:invoiceId/review", (req, res) => {
+    const invoice = db.prepare("select * from invoices where id = ?").get(req.params.invoiceId);
+    if (!invoice) {
+      return res.status(404).json({ error: "Rechnung nicht gefunden." });
+    }
+
+    const reviewedAt = new Date().toISOString();
+    db.prepare("update invoices set reviewed_at = ? where id = ?").run(reviewedAt, invoice.id);
+    return res.json(db.prepare("select * from invoices where id = ?").get(invoice.id));
+  });
+
   router.post("/invoices/:paymentId/finalize", async (req, res) => {
     const payment = db.prepare("select * from payment_records where id = ?").get(req.params.paymentId);
     if (!payment) {
@@ -193,9 +224,10 @@ export function createRouter(db) {
           output_docx_path,
           output_pdf_path,
           created_at,
+          reviewed_at,
           locked
         )
-        values (?, ?, ?, ?, null, ?, 1)
+        values (?, ?, ?, ?, null, ?, null, 1)
       `).run(payment.id, invoiceNumber, invoiceDate, outputDocxPath, now);
 
       db.prepare("update payment_records set status = 'invoiced', updated_at = ? where id = ?").run(now, payment.id);

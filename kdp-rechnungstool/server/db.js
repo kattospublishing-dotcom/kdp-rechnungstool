@@ -163,9 +163,16 @@ function applySchema(db) {
       output_docx_path text not null,
       output_pdf_path text,
       created_at text not null,
+      reviewed_at text,
       locked integer not null default 1
     );
   `);
+
+  const invoiceColumns = db.prepare("pragma table_info(invoices)").all().map((column) => column.name);
+  if (!invoiceColumns.includes("reviewed_at")) {
+    db.exec("alter table invoices add column reviewed_at text");
+    db.exec("update invoices set reviewed_at = created_at where reviewed_at is null");
+  }
 }
 
 function seedDefaults(db) {

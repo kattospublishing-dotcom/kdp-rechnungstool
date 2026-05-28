@@ -33,8 +33,19 @@ test("invoice tables fit without horizontal scrolling controls", () => {
   const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
   assert.match(appSource, /className="history-table"/);
+  assert.match(appSource, /className="review-table"/);
   assert.match(appSource, /apiDelete\(`\/invoices\/\$\{invoice\.id\}`\)/);
   assert.match(cssSource, /\.table-wrap[\s\S]*overflow-x: hidden/);
   assert.match(cssSource, /table[\s\S]*table-layout: fixed/);
   assert.doesNotMatch(cssSource, /min-width: 700px/);
+});
+
+test("app exposes invoice review queue with confetti approval", () => {
+  const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(appSource, /apiGet\("\/invoice-reviews"\)/);
+  assert.match(appSource, /apiPost\(`\/invoices\/\$\{invoice\.id\}\/review`/);
+  assert.match(appSource, /<Confetti \/>/);
+  assert.match(cssSource, /\.confetti-layer/);
+  assert.match(cssSource, /@keyframes confetti-fall/);
 });

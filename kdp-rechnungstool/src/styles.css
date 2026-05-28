@@ -133,7 +133,7 @@ button {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -429,10 +429,95 @@ th {
   width: 22%;
 }
 
+.review-table th:nth-child(1),
+.review-table td:nth-child(1) {
+  width: 13%;
+}
+
+.review-table th:nth-child(2),
+.review-table td:nth-child(2) {
+  width: 14%;
+}
+
+.review-table th:nth-child(3),
+.review-table td:nth-child(3) {
+  width: 16%;
+}
+
+.review-table th:nth-child(4),
+.review-table td:nth-child(4) {
+  width: 22%;
+}
+
+.review-table th:nth-child(5),
+.review-table td:nth-child(5) {
+  width: 13%;
+}
+
+.review-table th:nth-child(6),
+.review-table td:nth-child(6) {
+  width: 22%;
+}
+
 .invoice-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.review-check {
+  display: inline-flex;
+  align-items: center;
+  grid-template-columns: none;
+  gap: 7px;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.review-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.confetti-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti-layer span {
+  position: absolute;
+  top: -18px;
+  left: var(--x);
+  width: 9px;
+  height: 15px;
+  border-radius: 2px;
+  background: hsl(calc(var(--i) * 41), 85%, 58%);
+  animation: confetti-fall 1.6s ease-out forwards;
+  animation-delay: calc((var(--i) % 7) * 0.04s);
+  transform: rotate(calc(var(--i) * 18deg));
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -20px, 0) rotate(0deg);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(((var(--i) % 5) - 2) * 28px), 92vh, 0) rotate(540deg);
+  }
 }
 
 @media (max-width: 1180px) {
