@@ -121,7 +121,7 @@ test("preview pane can be docked outside the main workflow", () => {
   assert.doesNotMatch(cssSource, /\.preview-panel \{[\s\S]*position: sticky/);
   assert.match(cssSource, /\.preview-stage[\s\S]*flex: 1/);
   assert.match(cssSource, /\.preview-stage[\s\S]*height: auto/);
-  assert.match(cssSource, /\.preview-stage[\s\S]*min-height: clamp\(900px, 78vh, 1160px\)/);
+  assert.match(cssSource, /\.preview-stage[\s\S]*min-height: clamp\(820px, 70vh, 1040px\)/);
   assert.match(cssSource, /\.payments-table th:nth-child\(5\)[\s\S]*width: 28%/);
   assert.match(cssSource, /\.review-table th:nth-child\(6\)[\s\S]*width: 20%/);
 });
