@@ -25,10 +25,12 @@ test("invoice history links to Word download instead of showing local path", () 
   assert.doesNotMatch(appSource, /output_docx_path/);
 });
 
-test("payment grid stacks before the table clips action buttons", () => {
+test("payment grid keeps labels and action buttons on one line", () => {
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
   assert.match(cssSource, /@media \(max-width: 1180px\)[\s\S]*\.dashboard-grid[\s\S]*grid-template-columns: 1fr/);
   assert.match(cssSource, /white-space: nowrap/);
+  assert.match(cssSource, /\.payments-table[\s\S]*min-width: 920px/);
+  assert.match(cssSource, /\.payments-table th,[\s\S]*\.payments-table td[\s\S]*overflow-wrap: normal/);
 });
 
 test("invoice tables fit without horizontal scrolling controls", () => {
@@ -109,9 +111,9 @@ test("preview pane can be docked outside the main workflow", () => {
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
   assert.match(appSource, /className="workspace-grid"/);
   assert.match(appSource, /className="main-flow"/);
-  assert.match(cssSource, /--dashboard-width: 1380px/);
+  assert.match(cssSource, /--dashboard-width: 1760px/);
   assert.match(cssSource, /\.workspace-grid[\s\S]*width: min\(var\(--dashboard-width\), calc\(100% - 32px\)\)/);
-  assert.match(cssSource, /\.workspace-grid[\s\S]*grid-template-columns: minmax\(600px, 0\.82fr\) minmax\(760px, 1\.18fr\)/);
+  assert.match(cssSource, /\.workspace-grid[\s\S]*grid-template-columns: minmax\(1000px, 1fr\) minmax\(740px, 0\.74fr\)/);
   assert.match(cssSource, /\.preview-panel[\s\S]*position: static/);
   assert.doesNotMatch(cssSource, /\.preview-panel \{[\s\S]*position: sticky/);
   assert.match(cssSource, /\.preview-stage[\s\S]*height: clamp\(640px, 72vh, 760px\)/);

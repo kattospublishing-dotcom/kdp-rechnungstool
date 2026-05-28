@@ -18,7 +18,7 @@
   --color-gold: #b7791f;
   --color-red: #be123c;
   --shadow-panel: 0 16px 36px rgba(15, 23, 42, 0.08);
-  --dashboard-width: 1380px;
+  --dashboard-width: 1760px;
   color: var(--color-text);
   background: var(--color-bg);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -155,7 +155,7 @@ button {
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(600px, 0.82fr) minmax(760px, 1.18fr);
+  grid-template-columns: minmax(1000px, 1fr) minmax(740px, 0.74fr);
   gap: 18px;
   align-items: start;
 }
@@ -742,31 +742,41 @@ th {
 
 .payments-table th:nth-child(1),
 .payments-table td:nth-child(1) {
-  width: 16%;
+  width: 15%;
 }
 
 .payments-table th:nth-child(2),
 .payments-table td:nth-child(2) {
-  width: 24%;
+  width: 23%;
 }
 
 .payments-table th:nth-child(3),
 .payments-table td:nth-child(3) {
-  width: 19%;
+  width: 21%;
 }
 
 .payments-table th:nth-child(4),
 .payments-table td:nth-child(4) {
-  width: 13%;
+  width: 12%;
 }
 
 .payments-table th:nth-child(5),
 .payments-table td:nth-child(5) {
-  width: 28%;
+  width: 29%;
 }
 
 .payments-table .secondary-button {
   width: 100%;
+}
+
+.payments-table {
+  min-width: 920px;
+}
+
+.payments-table th,
+.payments-table td {
+  overflow-wrap: normal;
+  white-space: nowrap;
 }
 
 .history-table th:nth-child(1),
