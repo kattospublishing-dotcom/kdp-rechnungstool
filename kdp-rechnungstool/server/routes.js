@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createInvoiceDocx } from "./invoiceDocument.js";
 import { nextInvoiceNumber, parseInvoiceNumber, previousInvoiceNumber } from "./invoiceNumbers.js";
+import { importKdpScreenshot } from "./screenshotImport.js";
 
 export function createRouter(db) {
   const router = Router();
@@ -86,6 +87,29 @@ export function createRouter(db) {
 
     const payment = db.prepare("select * from payment_records where id = ?").get(result.lastInsertRowid);
     res.status(201).json(payment);
+  });
+
+  router.post("/screenshot-imports", async (req, res) => {
+    const { dataUrl, fileName, textOverride = "" } = req.body;
+    if (!dataUrl && !textOverride) {
+      return res.status(400).json({ error: "Bitte Screenshot hochladen." });
+    }
+
+    try {
+      const imageBuffer = dataUrl ? imageBufferFromDataUrl(dataUrl) : Buffer.from("");
+      const result = await importKdpScreenshot({
+        db,
+        imageBuffer,
+        uploadName: fileName,
+        textOverride
+      });
+      if (result.imported.length === 0 && result.skipped.length === 0) {
+        return res.status(422).json({ error: "Im Screenshot konnten keine KDP-Zahlungszeilen erkannt werden.", text: result.text });
+      }
+      return res.status(201).json(result);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
   });
 
   router.get("/invoices", (req, res) => {
@@ -239,6 +263,14 @@ export function createRouter(db) {
   });
 
   return router;
+}
+
+function imageBufferFromDataUrl(dataUrl) {
+  const match = /^data:image\/[a-zA-Z0-9.+-]+;base64,(.+)$/.exec(dataUrl);
+  if (!match) {
+    throw new Error("Screenshot-Format konnte nicht gelesen werden.");
+  }
+  return Buffer.from(match[1], "base64");
 }
 
 function highestInvoiceNumber(invoiceNumbers, settings) {

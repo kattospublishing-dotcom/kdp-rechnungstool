@@ -57,3 +57,12 @@ test("app exposes invoice review queue with confetti approval", () => {
   assert.match(cssSource, /\.confetti-layer/);
   assert.match(cssSource, /@keyframes confetti-fall/);
 });
+
+test("app exposes screenshot upload import", () => {
+  const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(appSource, /Screenshot importieren/);
+  assert.match(appSource, /apiPost\("\/screenshot-imports"/);
+  assert.match(appSource, /type="file"/);
+  assert.match(cssSource, /\.upload-box/);
+});

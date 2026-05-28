@@ -23,6 +23,9 @@ export default function App() {
   const [invoiceReviews, setInvoiceReviews] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [confetti, setConfetti] = useState(false);
+  const [screenshotFile, setScreenshotFile] = useState(null);
+  const [screenshotImporting, setScreenshotImporting] = useState(false);
+  const [screenshotResult, setScreenshotResult] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -130,6 +133,34 @@ export default function App() {
     }
   }
 
+  async function importScreenshot(event) {
+    event.preventDefault();
+    if (!screenshotFile) {
+      setError("Bitte zuerst einen Screenshot auswaehlen.");
+      return;
+    }
+
+    setError("");
+    setMessage("");
+    setScreenshotResult(null);
+    setScreenshotImporting(true);
+    try {
+      const dataUrl = await readFileAsDataUrl(screenshotFile);
+      const result = await apiPost("/screenshot-imports", {
+        fileName: screenshotFile.name,
+        dataUrl
+      });
+      setScreenshotResult(result);
+      setMessage(`${result.imported.length} Rechnung(en) aus dem Screenshot erzeugt und zur Pruefung abgelegt.`);
+      setScreenshotFile(null);
+      await refreshData();
+    } catch (err) {
+      setError(readError(err));
+    } finally {
+      setScreenshotImporting(false);
+    }
+  }
+
   return (
     <main className="app-shell">
       {confetti && <Confetti />}
@@ -166,6 +197,32 @@ export default function App() {
           {error || message}
         </section>
       )}
+
+      <section className="panel import-panel">
+        <div className="panel-title">
+          <h2>Screenshot importieren</h2>
+          <p>KDP-Zahlungsuebersicht hochladen, automatisch auslesen und Rechnungen zur Pruefung erzeugen.</p>
+        </div>
+        <form className="upload-row" onSubmit={importScreenshot}>
+          <label className="upload-box">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => setScreenshotFile(event.target.files?.[0] ?? null)}
+            />
+            <span>{screenshotFile ? screenshotFile.name : "Screenshot auswaehlen"}</span>
+          </label>
+          <button className="primary-button" type="submit" disabled={screenshotImporting}>
+            {screenshotImporting ? "Screenshot wird gelesen..." : "Automatisch erstellen"}
+          </button>
+        </form>
+        {screenshotResult && (
+          <div className="import-result">
+            <strong>{screenshotResult.imported.length} neue Rechnung(en)</strong>
+            <span>{screenshotResult.skipped.length} vorhandene Zeile(n) uebersprungen</span>
+          </div>
+        )}
+      </section>
 
       <section className="work-grid">
         <form className="panel form-panel" onSubmit={savePayment}>
@@ -434,4 +491,13 @@ function readError(err) {
   } catch {
     return err.message;
   }
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }

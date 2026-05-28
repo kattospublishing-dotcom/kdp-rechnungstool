@@ -14,9 +14,9 @@
     "better-sqlite3": "latest",
     "docx": "latest",
     "express": "latest",
-    "vite": "latest",
     "react": "latest",
-    "react-dom": "latest"
-  },
-  "devDependencies": {}
+    "react-dom": "latest",
+    "tesseract.js": "^7.0.0",
+    "vite": "latest"
+  }
 }

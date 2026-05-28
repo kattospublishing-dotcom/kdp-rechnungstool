@@ -302,3 +302,33 @@ test("POST /api/invoices/:invoiceId/review moves invoice into history", async ()
     server.close();
   }
 });
+
+test("POST /api/screenshot-imports creates review invoices from OCR text", async () => {
+  const { app } = createTestServer();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const textOverride = `
+100001131 175540 Amazon.com Bezahlt 2026-04-29 EFT USD 5.36 0.8526 EUR 4.57
+01. Feb. 2026 - 28. Feb. 2026 Taschenbuchverkäufe USD 5.36 USD 0.00 USD 5.36
+100000057 281031 Amazon.de Bezahlt 2026-04-29 EFT EUR 3.29 N/A EUR 3.29
+01. Feb. 2026 - 28. Feb. 2026 Taschenbuchverkäufe EUR 3.29 EUR 0.00 EUR 3.29
+100001132 509520 Amazon.ca Bezahlt 2026-04-29 EFT CAD 4.01 0.6234 EUR 2.50
+01. Feb. 2026 - 28. Feb. 2026 Taschenbuchverkäufe CAD 4.01 CAD 0.00 CAD 4.01
+`;
+
+  try {
+    const response = await fetch(`${baseUrl}/api/screenshot-imports`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ textOverride, fileName: "kdp.png" })
+    });
+    const body = await response.json();
+    const reviewQueue = await (await fetch(`${baseUrl}/api/invoice-reviews`)).json();
+
+    assert.equal(response.status, 201);
+    assert.deepEqual(body.imported.map((invoice) => invoice.invoice_number), ["RE202614", "RE202615", "RE202616"]);
+    assert.deepEqual(reviewQueue.map((invoice) => invoice.invoice_number), ["RE202614", "RE202615", "RE202616"]);
+  } finally {
+    server.close();
+  }
+});

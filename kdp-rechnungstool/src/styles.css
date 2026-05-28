@@ -126,6 +126,7 @@ button {
 .summary-grid,
 .work-grid,
 .history-panel,
+.import-panel,
 .notice {
   width: min(1240px, calc(100% - 32px));
   margin: 18px auto 0;
@@ -244,6 +245,56 @@ textarea:focus {
 }
 
 .customer-preview strong {
+  color: var(--color-heading);
+}
+
+.import-panel {
+  padding: 18px;
+}
+
+.upload-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.upload-box {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 8px;
+  background: var(--color-panel-soft);
+  padding: 10px 12px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.upload-box input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-box span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-result {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.import-result strong {
   color: var(--color-heading);
 }
 
@@ -577,8 +628,13 @@ th {
   .summary-grid,
   .work-grid,
   .history-panel,
+  .import-panel,
   .notice {
     width: min(100% - 20px, 1240px);
+  }
+
+  .upload-row {
+    grid-template-columns: 1fr;
   }
 
   th,
