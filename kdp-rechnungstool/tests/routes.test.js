@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createApp } from "../server/index.js";
@@ -204,6 +205,51 @@ test("GET /api/invoices/:invoiceId/docx downloads generated Word file", async ()
     assert.equal(downloadResponse.headers.get("content-type"), "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
     assert.match(downloadResponse.headers.get("content-disposition"), /RE202614\.docx/);
     assert.ok(bytes.byteLength > 1000);
+  } finally {
+    server.close();
+  }
+});
+
+test("DELETE /api/invoices/:invoiceId removes invoice, file, and rolls back counter", async () => {
+  const { app, db } = createTestServer();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const customer = db.prepare("select * from marketplace_customers where marketplace = ?").get("amazon.com");
+
+  try {
+    const createResponse = await fetch(`${baseUrl}/api/payments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        marketplaceCustomerId: customer.id,
+        paymentNumber: "100001196439600",
+        salesPeriodStart: "2026-03-01",
+        salesPeriodEnd: "2026-03-31",
+        paymentDate: "2026-05-29",
+        originalCurrency: "USD",
+        originalAmount: 22.42,
+        confirmedEurAmount: 20.12,
+        status: "confirmed"
+      })
+    });
+    const payment = await createResponse.json();
+    const finalizeResponse = await fetch(`${baseUrl}/api/invoices/${payment.id}/finalize`, { method: "POST" });
+    const invoice = await finalizeResponse.json();
+    const invoiceBeforeDelete = db.prepare("select * from invoices where id = ?").get(invoice.id);
+
+    const deleteResponse = await fetch(`${baseUrl}/api/invoices/${invoice.id}`, { method: "DELETE" });
+    const body = await deleteResponse.json();
+    const settings = db.prepare("select * from settings where id = 1").get();
+    const deletedInvoice = db.prepare("select * from invoices where id = ?").get(invoice.id);
+    const updatedPayment = db.prepare("select * from payment_records where id = ?").get(payment.id);
+
+    assert.equal(deleteResponse.status, 200);
+    assert.equal(body.deletedInvoiceNumber, "RE202614");
+    assert.equal(body.lastInvoiceNumber, "RE202613");
+    assert.equal(settings.last_invoice_number, "RE202613");
+    assert.equal(deletedInvoice, undefined);
+    assert.equal(updatedPayment.status, "confirmed");
+    assert.equal(fs.existsSync(invoiceBeforeDelete.output_docx_path), false);
   } finally {
     server.close();
   }

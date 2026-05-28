@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatInvoiceNumber, parseInvoiceNumber, nextInvoiceNumber } from "../server/invoiceNumbers.js";
+import { formatInvoiceNumber, parseInvoiceNumber, nextInvoiceNumber, previousInvoiceNumber } from "../server/invoiceNumbers.js";
 
 test("formats sequence with RE prefix, year, and two digit minimum", () => {
   assert.equal(formatInvoiceNumber({ prefix: "RE", year: 2026, sequence: 6 }), "RE202606");
@@ -13,4 +13,8 @@ test("parses existing invoice number", () => {
 
 test("computes next invoice number", () => {
   assert.equal(nextInvoiceNumber("RE202613"), "RE202614");
+});
+
+test("computes previous invoice number", () => {
+  assert.equal(previousInvoiceNumber("RE202614"), "RE202613");
 });

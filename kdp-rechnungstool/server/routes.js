@@ -2,7 +2,7 @@ import { Router } from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { createInvoiceDocx } from "./invoiceDocument.js";
-import { nextInvoiceNumber } from "./invoiceNumbers.js";
+import { nextInvoiceNumber, parseInvoiceNumber, previousInvoiceNumber } from "./invoiceNumbers.js";
 
 export function createRouter(db) {
   const router = Router();
@@ -119,6 +119,39 @@ export function createRouter(db) {
     return res.sendFile(invoice.output_docx_path);
   });
 
+  router.delete("/invoices/:invoiceId", (req, res) => {
+    const invoice = db.prepare("select * from invoices where id = ?").get(req.params.invoiceId);
+    if (!invoice) {
+      return res.status(404).json({ error: "Rechnung nicht gefunden." });
+    }
+
+    const settings = db.prepare("select * from settings where id = 1").get();
+    const remainingInvoices = db.prepare("select invoice_number from invoices where id <> ?").all(invoice.id);
+    const fallbackInvoiceNumber = previousInvoiceNumber(invoice.invoice_number);
+    const highestRemainingInvoiceNumber = highestInvoiceNumber(remainingInvoices.map((row) => row.invoice_number), settings);
+    const lastInvoiceNumber = highestRemainingInvoiceNumber ?? fallbackInvoiceNumber;
+
+    const deleteInvoice = db.transaction(() => {
+      db.prepare("delete from invoices where id = ?").run(invoice.id);
+      db.prepare("update payment_records set status = 'confirmed', updated_at = ? where id = ?")
+        .run(new Date().toISOString(), invoice.payment_record_id);
+      db.prepare("update settings set last_invoice_number = ? where id = 1").run(lastInvoiceNumber);
+    });
+
+    deleteInvoice();
+    if (invoice.output_docx_path && fs.existsSync(invoice.output_docx_path)) {
+      fs.unlinkSync(invoice.output_docx_path);
+    }
+    if (invoice.output_pdf_path && fs.existsSync(invoice.output_pdf_path)) {
+      fs.unlinkSync(invoice.output_pdf_path);
+    }
+
+    return res.json({
+      deletedInvoiceNumber: invoice.invoice_number,
+      lastInvoiceNumber
+    });
+  });
+
   router.post("/invoices/:paymentId/finalize", async (req, res) => {
     const payment = db.prepare("select * from payment_records where id = ?").get(req.params.paymentId);
     if (!payment) {
@@ -174,4 +207,24 @@ export function createRouter(db) {
   });
 
   return router;
+}
+
+function highestInvoiceNumber(invoiceNumbers, settings) {
+  const candidates = invoiceNumbers
+    .map((invoiceNumber) => {
+      try {
+        return parseInvoiceNumber(invoiceNumber);
+      } catch {
+        return null;
+      }
+    })
+    .filter((invoiceNumber) =>
+      invoiceNumber &&
+      invoiceNumber.prefix === settings.invoice_prefix &&
+      invoiceNumber.year === settings.invoice_year
+    )
+    .sort((a, b) => b.sequence - a.sequence);
+
+  if (!candidates[0]) return null;
+  return `${candidates[0].prefix}${candidates[0].year}${String(candidates[0].sequence).padStart(2, "0")}`;
 }

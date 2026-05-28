@@ -19,3 +19,11 @@ export function nextInvoiceNumber(invoiceNumber) {
   const parsed = parseInvoiceNumber(invoiceNumber);
   return formatInvoiceNumber({ ...parsed, sequence: parsed.sequence + 1 });
 }
+
+export function previousInvoiceNumber(invoiceNumber) {
+  const parsed = parseInvoiceNumber(invoiceNumber);
+  if (parsed.sequence <= 0) {
+    throw new Error(`Invalid invoice sequence: ${invoiceNumber}`);
+  }
+  return formatInvoiceNumber({ ...parsed, sequence: parsed.sequence - 1 });
+}

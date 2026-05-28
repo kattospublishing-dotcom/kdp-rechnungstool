@@ -249,6 +249,7 @@ textarea:focus {
 
 .primary-button,
 .secondary-button,
+.danger-button,
 .theme-toggle {
   min-height: 38px;
   border-radius: 6px;
@@ -273,6 +274,11 @@ textarea:focus {
   color: var(--color-secondary-text);
 }
 
+.danger-button {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .theme-toggle {
   border: 1px solid var(--color-border);
   background: var(--color-panel-soft);
@@ -285,13 +291,13 @@ textarea:focus {
 }
 
 .table-wrap {
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 700px;
+  table-layout: fixed;
 }
 
 th,
@@ -301,6 +307,7 @@ td {
   text-align: left;
   vertical-align: middle;
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 th {
@@ -367,6 +374,67 @@ th {
   color: var(--color-primary-hover);
 }
 
+.payments-table th:nth-child(1),
+.payments-table td:nth-child(1) {
+  width: 17%;
+}
+
+.payments-table th:nth-child(2),
+.payments-table td:nth-child(2) {
+  width: 25%;
+}
+
+.payments-table th:nth-child(3),
+.payments-table td:nth-child(3) {
+  width: 21%;
+}
+
+.payments-table th:nth-child(4),
+.payments-table td:nth-child(4) {
+  width: 15%;
+}
+
+.payments-table th:nth-child(5),
+.payments-table td:nth-child(5) {
+  width: 22%;
+}
+
+.history-table th:nth-child(1),
+.history-table td:nth-child(1) {
+  width: 14%;
+}
+
+.history-table th:nth-child(2),
+.history-table td:nth-child(2) {
+  width: 13%;
+}
+
+.history-table th:nth-child(3),
+.history-table td:nth-child(3) {
+  width: 16%;
+}
+
+.history-table th:nth-child(4),
+.history-table td:nth-child(4) {
+  width: 22%;
+}
+
+.history-table th:nth-child(5),
+.history-table td:nth-child(5) {
+  width: 13%;
+}
+
+.history-table th:nth-child(6),
+.history-table td:nth-child(6) {
+  width: 22%;
+}
+
+.invoice-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 1180px) {
   .work-grid {
     grid-template-columns: 1fr;
@@ -401,5 +469,18 @@ th {
   .history-panel,
   .notice {
     width: min(100% - 20px, 1240px);
+  }
+
+  th,
+  td {
+    padding: 9px 7px;
+    font-size: 12px;
+  }
+
+  .secondary-button,
+  .danger-button,
+  .file-link {
+    width: 100%;
+    padding-inline: 8px;
   }
 }

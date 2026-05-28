@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { apiGet, apiPost } from "./api.js";
+import { apiDelete, apiGet, apiPost } from "./api.js";
 import "./styles.css";
 
 const initialForm = {
@@ -89,6 +89,23 @@ export default function App() {
     try {
       const invoice = await apiPost(`/invoices/${paymentId}/finalize`, {});
       setMessage(`Rechnung ${invoice.invoice_number} wurde erzeugt.`);
+      await refreshData();
+    } catch (err) {
+      setError(readError(err));
+    }
+  }
+
+  async function deleteInvoice(invoice) {
+    const confirmed = window.confirm(
+      `Rechnung ${invoice.invoice_number} wirklich loeschen? Die Zahlung wird wieder auf EUR bestaetigt gesetzt.`
+    );
+    if (!confirmed) return;
+
+    setError("");
+    setMessage("");
+    try {
+      const result = await apiDelete(`/invoices/${invoice.id}`);
+      setMessage(`Rechnung ${result.deletedInvoiceNumber} wurde geloescht. Letzte Rechnung: ${result.lastInvoiceNumber}.`);
       await refreshData();
     } catch (err) {
       setError(readError(err));
@@ -220,7 +237,7 @@ export default function App() {
             <p>Finalisieren erst nach Konto-Bestaetigung.</p>
           </div>
           <div className="table-wrap">
-            <table>
+            <table className="payments-table">
               <thead>
                 <tr>
                   <th>Marketplace</th>
@@ -266,7 +283,7 @@ export default function App() {
           <p>Erzeugte Rechnungen bleiben nachvollziehbar gespeichert.</p>
         </div>
         <div className="table-wrap">
-          <table>
+          <table className="history-table">
             <thead>
               <tr>
                 <th>Rechnung</th>
@@ -274,7 +291,7 @@ export default function App() {
                 <th>Marketplace</th>
                 <th>Zahlungsnummer</th>
                 <th>EUR</th>
-                <th>Datei</th>
+                <th>Aktion</th>
               </tr>
             </thead>
             <tbody>
@@ -285,10 +302,13 @@ export default function App() {
                   <td>{invoice.display_name}</td>
                   <td>{invoice.payment_number}</td>
                   <td>{formatAmount(invoice.confirmed_eur_amount)}</td>
-                  <td>
+                  <td className="invoice-actions">
                     <a className="file-link" href={`/api/invoices/${invoice.id}/docx`}>
-                      Word-Datei
+                      Anzeigen
                     </a>
+                    <button className="danger-button" type="button" onClick={() => deleteInvoice(invoice)}>
+                      Loeschen
+                    </button>
                   </td>
                 </tr>
               ))}

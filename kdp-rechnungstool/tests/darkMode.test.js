@@ -19,7 +19,7 @@ test("stylesheet defines dark-mode theme tokens", () => {
 test("invoice history links to Word download instead of showing local path", () => {
   const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   assert.match(appSource, /href=\{`\/api\/invoices\/\$\{invoice\.id\}\/docx`\}/);
-  assert.match(appSource, /Word-Datei/);
+  assert.match(appSource, /Anzeigen/);
   assert.doesNotMatch(appSource, /output_docx_path/);
 });
 
@@ -27,4 +27,14 @@ test("payment grid stacks before the table clips action buttons", () => {
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
   assert.match(cssSource, /@media \(max-width: 1180px\)[\s\S]*\.work-grid[\s\S]*grid-template-columns: 1fr/);
   assert.match(cssSource, /white-space: nowrap/);
+});
+
+test("invoice tables fit without horizontal scrolling controls", () => {
+  const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(appSource, /className="history-table"/);
+  assert.match(appSource, /apiDelete\(`\/invoices\/\$\{invoice\.id\}`\)/);
+  assert.match(cssSource, /\.table-wrap[\s\S]*overflow-x: hidden/);
+  assert.match(cssSource, /table[\s\S]*table-layout: fixed/);
+  assert.doesNotMatch(cssSource, /min-width: 700px/);
 });
