@@ -114,9 +114,14 @@ test("preview pane can be docked outside the main workflow", () => {
   assert.match(cssSource, /--dashboard-width: 1760px/);
   assert.match(cssSource, /\.workspace-grid[\s\S]*width: min\(var\(--dashboard-width\), calc\(100% - 32px\)\)/);
   assert.match(cssSource, /\.workspace-grid[\s\S]*grid-template-columns: minmax\(1000px, 1fr\) minmax\(740px, 0\.74fr\)/);
+  assert.match(cssSource, /\.workspace-grid[\s\S]*align-items: stretch/);
   assert.match(cssSource, /\.preview-panel[\s\S]*position: static/);
+  assert.match(cssSource, /\.preview-panel[\s\S]*display: flex/);
+  assert.match(cssSource, /\.preview-panel[\s\S]*height: 100%/);
   assert.doesNotMatch(cssSource, /\.preview-panel \{[\s\S]*position: sticky/);
-  assert.match(cssSource, /\.preview-stage[\s\S]*height: clamp\(640px, 72vh, 760px\)/);
+  assert.match(cssSource, /\.preview-stage[\s\S]*flex: 1/);
+  assert.match(cssSource, /\.preview-stage[\s\S]*height: auto/);
+  assert.match(cssSource, /\.preview-stage[\s\S]*min-height: clamp\(900px, 78vh, 1160px\)/);
   assert.match(cssSource, /\.payments-table th:nth-child\(5\)[\s\S]*width: 28%/);
   assert.match(cssSource, /\.review-table th:nth-child\(6\)[\s\S]*width: 20%/);
 });
