@@ -26,6 +26,7 @@ export default function App() {
   const [screenshotFile, setScreenshotFile] = useState(null);
   const [screenshotImporting, setScreenshotImporting] = useState(false);
   const [screenshotResult, setScreenshotResult] = useState(null);
+  const [previewInvoiceId, setPreviewInvoiceId] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -33,6 +34,11 @@ export default function App() {
   const selectedCustomer = useMemo(
     () => customers.find((customer) => String(customer.id) === String(form.marketplaceCustomerId)),
     [customers, form.marketplaceCustomerId]
+  );
+  const previewInvoices = useMemo(() => [...invoiceReviews, ...invoices], [invoiceReviews, invoices]);
+  const previewInvoice = useMemo(
+    () => previewInvoices.find((invoice) => invoice.id === previewInvoiceId) ?? previewInvoices[0] ?? null,
+    [previewInvoiceId, previewInvoices]
   );
 
   useEffect(() => {
@@ -198,123 +204,90 @@ export default function App() {
         </section>
       )}
 
-      <section className="panel import-panel">
-        <div className="panel-title">
-          <h2>Screenshot importieren</h2>
-          <p>KDP-Zahlungsuebersicht hochladen, automatisch auslesen und Rechnungen zur Pruefung erzeugen.</p>
-        </div>
-        <form className="upload-row" onSubmit={importScreenshot}>
-          <label className="upload-box">
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(event) => setScreenshotFile(event.target.files?.[0] ?? null)}
-            />
-            <span>{screenshotFile ? screenshotFile.name : "Screenshot auswaehlen"}</span>
-          </label>
-          <button className="primary-button" type="submit" disabled={screenshotImporting}>
-            {screenshotImporting ? "Screenshot wird gelesen..." : "Automatisch erstellen"}
-          </button>
-        </form>
-        {screenshotResult && (
-          <div className="import-result">
-            <strong>{screenshotResult.imported.length} neue Rechnung(en)</strong>
-            <span>{screenshotResult.skipped.length} vorhandene Zeile(n) uebersprungen</span>
-          </div>
-        )}
-      </section>
-
-      <section className="work-grid">
-        <form className="panel form-panel" onSubmit={savePayment}>
-          <div className="panel-title">
-            <h2>Neue Zahlung erfassen</h2>
-            <p>Eine Zahlungszeile ergibt eine Rechnung.</p>
-          </div>
-
-          <label>
-            Marketplace
-            <select name="marketplaceCustomerId" value={form.marketplaceCustomerId} onChange={updateField} required>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.display_name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {selectedCustomer && (
-            <div className="customer-preview">
-              <strong>{selectedCustomer.company_name}</strong>
-              <span>{selectedCustomer.service_description}</span>
+      <section className="dashboard-grid">
+        <div className="left-stack">
+          <section className="panel command-panel">
+            <div className="panel-title">
+              <h2>Automatisch importieren</h2>
+              <p>Screenshot hochladen und Rechnungen direkt zur Pruefung erzeugen.</p>
             </div>
-          )}
+            <form className="upload-row" onSubmit={importScreenshot}>
+              <label className="upload-box">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(event) => setScreenshotFile(event.target.files?.[0] ?? null)}
+                />
+                <span>{screenshotFile ? screenshotFile.name : "Screenshot auswaehlen"}</span>
+              </label>
+              <button className="primary-button" type="submit" disabled={screenshotImporting}>
+                {screenshotImporting ? "Wird gelesen..." : "Automatisch erstellen"}
+              </button>
+            </form>
+            {screenshotResult && (
+              <div className="import-result">
+                <strong>{screenshotResult.imported.length} neue Rechnung(en)</strong>
+                <span>{screenshotResult.skipped.length} vorhandene Zeile(n) uebersprungen</span>
+              </div>
+            )}
+          </section>
 
-          <div className="field-grid">
-            <label>
-              Zahlungsnummer
-              <input name="paymentNumber" value={form.paymentNumber} onChange={updateField} required />
-            </label>
-            <label>
-              Zahlungsdatum
-              <input type="date" name="paymentDate" value={form.paymentDate} onChange={updateField} required />
-            </label>
-            <label>
-              Zeitraum von
-              <input type="date" name="salesPeriodStart" value={form.salesPeriodStart} onChange={updateField} required />
-            </label>
-            <label>
-              Zeitraum bis
-              <input type="date" name="salesPeriodEnd" value={form.salesPeriodEnd} onChange={updateField} required />
-            </label>
-            <label>
-              Originalbetrag
-              <input type="number" step="0.01" name="originalAmount" value={form.originalAmount} onChange={updateField} required />
-            </label>
-            <label>
-              Originalwaehrung
-              <select name="originalCurrency" value={form.originalCurrency} onChange={updateField} required>
-                <option>EUR</option>
-                <option>USD</option>
-                <option>CAD</option>
-                <option>GBP</option>
-                <option>AUD</option>
-                <option>BRL</option>
-                <option>MXN</option>
-              </select>
-            </label>
-            <label>
-              Wechselkurs optional
-              <input type="number" step="0.0001" name="exchangeRate" value={form.exchangeRate} onChange={updateField} />
-            </label>
-            <label>
-              EUR laut Kontoauszug
-              <input type="number" step="0.01" name="confirmedEurAmount" value={form.confirmedEurAmount} onChange={updateField} />
-            </label>
-          </div>
+          <details className="panel manual-panel">
+            <summary>Manuell erfassen</summary>
+            <form className="form-panel" onSubmit={savePayment}>
+              <label>
+                Marketplace
+                <select name="marketplaceCustomerId" value={form.marketplaceCustomerId} onChange={updateField} required>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.display_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <label>
-            Status
-            <select name="status" value={form.status} onChange={updateField}>
-              <option value="draft">Entwurf</option>
-              <option value="confirmed">EUR bestaetigt</option>
-            </select>
-          </label>
+              {selectedCustomer && (
+                <div className="customer-preview">
+                  <strong>{selectedCustomer.company_name}</strong>
+                  <span>{selectedCustomer.service_description}</span>
+                </div>
+              )}
 
-          <label>
-            Notiz
-            <textarea name="notes" rows="3" value={form.notes} onChange={updateField} />
-          </label>
+              <div className="field-grid compact-fields">
+                <label>Zahlungsnummer<input name="paymentNumber" value={form.paymentNumber} onChange={updateField} required /></label>
+                <label>Zahlungsdatum<input type="date" name="paymentDate" value={form.paymentDate} onChange={updateField} required /></label>
+                <label>Zeitraum von<input type="date" name="salesPeriodStart" value={form.salesPeriodStart} onChange={updateField} required /></label>
+                <label>Zeitraum bis<input type="date" name="salesPeriodEnd" value={form.salesPeriodEnd} onChange={updateField} required /></label>
+                <label>Originalbetrag<input type="number" step="0.01" name="originalAmount" value={form.originalAmount} onChange={updateField} required /></label>
+                <label>
+                  Originalwaehrung
+                  <select name="originalCurrency" value={form.originalCurrency} onChange={updateField} required>
+                    <option>EUR</option><option>USD</option><option>CAD</option><option>GBP</option><option>AUD</option><option>BRL</option><option>MXN</option>
+                  </select>
+                </label>
+                <label>Wechselkurs optional<input type="number" step="0.0001" name="exchangeRate" value={form.exchangeRate} onChange={updateField} /></label>
+                <label>EUR laut Kontoauszug<input type="number" step="0.01" name="confirmedEurAmount" value={form.confirmedEurAmount} onChange={updateField} /></label>
+              </div>
 
-          <button className="primary-button" type="submit">Zahlung speichern</button>
-        </form>
+              <label>
+                Status
+                <select name="status" value={form.status} onChange={updateField}>
+                  <option value="draft">Entwurf</option>
+                  <option value="confirmed">EUR bestaetigt</option>
+                </select>
+              </label>
+              <label>Notiz<textarea name="notes" rows="2" value={form.notes} onChange={updateField} /></label>
+              <button className="primary-button" type="submit">Zahlung speichern</button>
+            </form>
+          </details>
 
-        <section className="panel">
-          <div className="panel-title">
-            <h2>Zahlungen</h2>
-            <p>Finalisieren erst nach Konto-Bestaetigung.</p>
-          </div>
-          <div className="table-wrap">
-            <table className="payments-table">
+          <section className="panel">
+            <div className="panel-title">
+              <h2>Zahlungen</h2>
+              <p>Finalisieren erst nach Konto-Bestaetigung.</p>
+            </div>
+            <div className="table-wrap">
+              <table className="payments-table">
               <thead>
                 <tr>
                   <th>Marketplace</th>
@@ -349,9 +322,22 @@ export default function App() {
                   </tr>
                 )}
               </tbody>
-            </table>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <aside className="panel preview-panel">
+          <div className="panel-title">
+            <h2>Rechnungsvorschau</h2>
+            <p>{previewInvoice ? `${previewInvoice.invoice_number} direkt im Tool pruefen.` : "Noch keine Rechnung ausgewaehlt."}</p>
           </div>
-        </section>
+          {previewInvoice ? (
+            <iframe className="invoice-preview" title={`Vorschau ${previewInvoice.invoice_number}`} src={`/api/invoices/${previewInvoice.id}/preview`} />
+          ) : (
+            <div className="preview-empty">Sobald eine Rechnung erzeugt wurde, erscheint hier die Vorschau.</div>
+          )}
+        </aside>
       </section>
 
       <section className="panel history-panel">
@@ -385,9 +371,8 @@ export default function App() {
                   <td>{invoice.payment_number}</td>
                   <td>{formatAmount(invoice.confirmed_eur_amount)}</td>
                   <td className="invoice-actions">
-                    <a className="file-link" href={`/api/invoices/${invoice.id}/docx`}>
-                      Anzeigen
-                    </a>
+                    <button className="file-link" type="button" onClick={() => setPreviewInvoiceId(invoice.id)}>Vorschau</button>
+                    <a className="file-link" href={`/api/invoices/${invoice.id}/docx`}>Word</a>
                     <button className="danger-button" type="button" onClick={() => deleteInvoice(invoice)}>
                       Loeschen
                     </button>
@@ -430,9 +415,8 @@ export default function App() {
                   <td>{invoice.payment_number}</td>
                   <td>{formatAmount(invoice.confirmed_eur_amount)}</td>
                   <td className="invoice-actions">
-                    <a className="file-link" href={`/api/invoices/${invoice.id}/docx`}>
-                      Anzeigen
-                    </a>
+                    <button className="file-link" type="button" onClick={() => setPreviewInvoiceId(invoice.id)}>Vorschau</button>
+                    <a className="file-link" href={`/api/invoices/${invoice.id}/docx`}>Word</a>
                     <button className="danger-button" type="button" onClick={() => deleteInvoice(invoice)}>
                       Loeschen
                     </button>

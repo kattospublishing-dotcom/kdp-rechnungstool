@@ -2,8 +2,11 @@ import { Router } from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { createInvoiceDocx } from "./invoiceDocument.js";
-import { nextInvoiceNumber, parseInvoiceNumber, previousInvoiceNumber } from "./invoiceNumbers.js";
+import { createInvoicePreviewHtml } from "./invoicePreview.js";
+import { nextInvoiceNumber, parseInvoiceNumber } from "./invoiceNumbers.js";
 import { importKdpScreenshot } from "./screenshotImport.js";
+
+const BASE_INVOICE_SEQUENCE = 13;
 
 export function createRouter(db) {
   const router = Router();
@@ -163,6 +166,33 @@ export function createRouter(db) {
     return res.sendFile(invoice.output_docx_path);
   });
 
+  router.get("/invoices/:invoiceId/preview", (req, res) => {
+    const data = db.prepare(`
+      select
+        i.*,
+        p.*,
+        c.company_name,
+        c.address_lines_json,
+        c.tax_label,
+        c.tax_id,
+        c.service_description
+      from invoices i
+      join payment_records p on p.id = i.payment_record_id
+      join marketplace_customers c on c.id = p.marketplace_customer_id
+      where i.id = ?
+    `).get(req.params.invoiceId);
+    if (!data) {
+      return res.status(404).send("Rechnung nicht gefunden.");
+    }
+    const html = createInvoicePreviewHtml({
+      invoice: data,
+      payment: data,
+      customer: data
+    });
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.send(html);
+  });
+
   router.delete("/invoices/:invoiceId", (req, res) => {
     const invoice = db.prepare("select * from invoices where id = ?").get(req.params.invoiceId);
     if (!invoice) {
@@ -171,9 +201,8 @@ export function createRouter(db) {
 
     const settings = db.prepare("select * from settings where id = 1").get();
     const remainingInvoices = db.prepare("select invoice_number from invoices where id <> ?").all(invoice.id);
-    const fallbackInvoiceNumber = previousInvoiceNumber(invoice.invoice_number);
     const highestRemainingInvoiceNumber = highestInvoiceNumber(remainingInvoices.map((row) => row.invoice_number), settings);
-    const lastInvoiceNumber = highestRemainingInvoiceNumber ?? fallbackInvoiceNumber;
+    const lastInvoiceNumber = highestRemainingInvoiceNumber ?? baselineInvoiceNumber(settings);
 
     const deleteInvoice = db.transaction(() => {
       db.prepare("delete from invoices where id = ?").run(invoice.id);
@@ -291,4 +320,8 @@ function highestInvoiceNumber(invoiceNumbers, settings) {
 
   if (!candidates[0]) return null;
   return `${candidates[0].prefix}${candidates[0].year}${String(candidates[0].sequence).padStart(2, "0")}`;
+}
+
+function baselineInvoiceNumber(settings) {
+  return `${settings.invoice_prefix}${settings.invoice_year}${String(BASE_INVOICE_SEQUENCE).padStart(2, "0")}`;
 }

@@ -217,6 +217,44 @@ test("GET /api/invoices/:invoiceId/docx downloads generated Word file", async ()
   }
 });
 
+test("GET /api/invoices/:invoiceId/preview returns an inline invoice preview", async () => {
+  const { app, db } = createTestServer();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const customer = db.prepare("select * from marketplace_customers where marketplace = ?").get("amazon.com");
+
+  try {
+    const createResponse = await fetch(`${baseUrl}/api/payments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        marketplaceCustomerId: customer.id,
+        paymentNumber: "100001196439600",
+        salesPeriodStart: "2026-03-01",
+        salesPeriodEnd: "2026-03-31",
+        paymentDate: "2026-05-29",
+        originalCurrency: "USD",
+        originalAmount: 22.42,
+        confirmedEurAmount: 20.12,
+        status: "confirmed"
+      })
+    });
+    const payment = await createResponse.json();
+    const finalizeResponse = await fetch(`${baseUrl}/api/invoices/${payment.id}/finalize`, { method: "POST" });
+    const invoice = await finalizeResponse.json();
+
+    const previewResponse = await fetch(`${baseUrl}/api/invoices/${invoice.id}/preview`);
+    const html = await previewResponse.text();
+
+    assert.equal(previewResponse.status, 200);
+    assert.match(previewResponse.headers.get("content-type"), /text\/html/);
+    assert.match(html, /Rechnungs-Nr\.: RE202614/);
+    assert.match(html, /20,12 EUR/);
+  } finally {
+    server.close();
+  }
+});
+
 test("DELETE /api/invoices/:invoiceId removes invoice, file, and rolls back counter", async () => {
   const { app, db } = createTestServer();
   const server = app.listen(0);
@@ -257,6 +295,50 @@ test("DELETE /api/invoices/:invoiceId removes invoice, file, and rolls back coun
     assert.equal(deletedInvoice, undefined);
     assert.equal(updatedPayment.status, "confirmed");
     assert.equal(fs.existsSync(invoiceBeforeDelete.output_docx_path), false);
+  } finally {
+    server.close();
+  }
+});
+
+test("DELETE /api/invoices rolls counter back to baseline after several deletions", async () => {
+  const { app, db } = createTestServer();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const customer = db.prepare("select * from marketplace_customers where marketplace = ?").get("amazon.com");
+  const invoices = [];
+
+  try {
+    for (const suffix of ["001", "002", "003"]) {
+      const createResponse = await fetch(`${baseUrl}/api/payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          marketplaceCustomerId: customer.id,
+          paymentNumber: `100001196439${suffix}`,
+          salesPeriodStart: "2026-03-01",
+          salesPeriodEnd: "2026-03-31",
+          paymentDate: "2026-05-29",
+          originalCurrency: "USD",
+          originalAmount: 22.42,
+          confirmedEurAmount: 20.12,
+          status: "confirmed"
+        })
+      });
+      const payment = await createResponse.json();
+      const finalizeResponse = await fetch(`${baseUrl}/api/invoices/${payment.id}/finalize`, { method: "POST" });
+      invoices.push(await finalizeResponse.json());
+    }
+
+    for (const invoice of invoices) {
+      await fetch(`${baseUrl}/api/invoices/${invoice.id}`, { method: "DELETE" });
+    }
+
+    const settings = db.prepare("select * from settings where id = 1").get();
+    const remainingInvoices = db.prepare("select * from invoices").all();
+
+    assert.deepEqual(invoices.map((invoice) => invoice.invoice_number), ["RE202614", "RE202615", "RE202616"]);
+    assert.equal(settings.last_invoice_number, "RE202613");
+    assert.deepEqual(remainingInvoices, []);
   } finally {
     server.close();
   }

@@ -19,13 +19,14 @@ test("stylesheet defines dark-mode theme tokens", () => {
 test("invoice history links to Word download instead of showing local path", () => {
   const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   assert.match(appSource, /href=\{`\/api\/invoices\/\$\{invoice\.id\}\/docx`\}/);
-  assert.match(appSource, /Anzeigen/);
+  assert.match(appSource, /Vorschau/);
+  assert.match(appSource, /Word/);
   assert.doesNotMatch(appSource, /output_docx_path/);
 });
 
 test("payment grid stacks before the table clips action buttons", () => {
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
-  assert.match(cssSource, /@media \(max-width: 1180px\)[\s\S]*\.work-grid[\s\S]*grid-template-columns: 1fr/);
+  assert.match(cssSource, /@media \(max-width: 1180px\)[\s\S]*\.dashboard-grid[\s\S]*grid-template-columns: 1fr/);
   assert.match(cssSource, /white-space: nowrap/);
 });
 
@@ -42,10 +43,20 @@ test("invoice tables fit without horizontal scrolling controls", () => {
 
 test("invoice action buttons stay side by side with animated styling", () => {
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
-  assert.match(cssSource, /\.invoice-actions[\s\S]*grid-template-columns: repeat\(2, minmax\(74px, 1fr\)\)/);
+  assert.match(cssSource, /\.invoice-actions[\s\S]*grid-template-columns: repeat\(3, minmax\(62px, 1fr\)\)/);
   assert.match(cssSource, /\.file-link:hover[\s\S]*transform: translateY\(-1px\)/);
   assert.match(cssSource, /\.danger-button:hover[\s\S]*transform: translateY\(-1px\)/);
   assert.match(cssSource, /linear-gradient/);
+});
+
+test("app exposes organized dashboard and invoice preview pane", () => {
+  const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(appSource, /className="dashboard-grid"/);
+  assert.match(appSource, /className="invoice-preview"/);
+  assert.match(appSource, /\/api\/invoices\/\$\{previewInvoice\.id\}\/preview/);
+  assert.match(cssSource, /\.preview-panel/);
+  assert.match(cssSource, /\.invoice-preview/);
 });
 
 test("app exposes invoice review queue with confetti approval", () => {
@@ -61,7 +72,7 @@ test("app exposes invoice review queue with confetti approval", () => {
 test("app exposes screenshot upload import", () => {
   const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
-  assert.match(appSource, /Screenshot importieren/);
+  assert.match(appSource, /Automatisch importieren/);
   assert.match(appSource, /apiPost\("\/screenshot-imports"/);
   assert.match(appSource, /type="file"/);
   assert.match(cssSource, /\.upload-box/);

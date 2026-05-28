@@ -11,7 +11,9 @@ const __dirname = path.dirname(__filename);
 export function createApp(db) {
   const app = express();
   const distDir = path.resolve(__dirname, "..", "dist");
+  const assetDir = path.resolve(__dirname, "assets");
   app.use(express.json({ limit: "20mb" }));
+  app.use(express.static(assetDir));
   app.use("/api", createRouter(db));
   if (fs.existsSync(distDir)) {
     app.use(express.static(distDir));
