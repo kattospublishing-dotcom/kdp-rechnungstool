@@ -3,10 +3,14 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { createInvoiceDocx, formatEuro } from "../server/invoiceDocument.js";
+import { createInvoiceDocx, formatEuro, LOGO_TRANSFORMATION } from "../server/invoiceDocument.js";
 
 test("formats euro amounts for German invoice display", () => {
   assert.equal(formatEuro(20.12), "20,12 EUR");
+});
+
+test("uses the elongated logo proportions from the invoice template", () => {
+  assert.deepEqual(LOGO_TRANSFORMATION, { width: 150, height: 160 });
 });
 
 test("creates a non-empty docx file", async () => {

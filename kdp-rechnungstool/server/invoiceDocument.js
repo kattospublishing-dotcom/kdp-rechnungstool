@@ -20,6 +20,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const LOGO_PATH = path.join(__dirname, "assets", "kattos-logo.png");
+export const LOGO_TRANSFORMATION = { width: 150, height: 160 };
 const BLUE = "115582";
 const BLACK = "000000";
 
@@ -159,7 +160,7 @@ function logoRun() {
   return [
     new ImageRun({
       data: fs.readFileSync(LOGO_PATH),
-      transformation: { width: 150, height: 109 }
+      transformation: LOGO_TRANSFORMATION
     })
   ];
 }
