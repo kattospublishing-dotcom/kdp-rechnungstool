@@ -141,7 +141,7 @@ button {
 .workspace-grid,
 .history-panel,
 .import-panel {
-  width: min(1720px, calc(100% - 32px));
+  width: min(1780px, calc(100% - 32px));
   margin: 18px auto 0;
 }
 
@@ -154,7 +154,7 @@ button {
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(740px, 0.9fr) minmax(740px, 1.1fr);
+  grid-template-columns: minmax(760px, 0.9fr) minmax(920px, 1.1fr);
   gap: 18px;
   align-items: start;
 }
@@ -512,8 +512,8 @@ textarea:focus {
   display: grid;
   place-items: center;
   width: 100%;
-  height: clamp(560px, 68vh, 720px);
-  min-height: 560px;
+  height: clamp(660px, 74vh, 760px);
+  min-height: 660px;
   overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -830,17 +830,19 @@ th {
 
 .invoice-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(62px, 1fr));
+  width: 100%;
+  grid-template-columns: minmax(78px, 1fr) minmax(78px, 1fr) minmax(92px, 1fr);
   gap: 8px;
   align-items: center;
-  min-width: 222px;
+  min-width: 0;
 }
 
 .invoice-actions .file-link,
 .invoice-actions .danger-button {
   width: 100%;
+  min-width: 92px;
   min-height: 34px;
-  padding: 7px 9px;
+  padding: 7px 8px;
   font-size: 12px;
 }
 
@@ -899,9 +901,9 @@ th {
   }
 }
 
-@media (max-width: 1520px) {
+@media (max-width: 1700px) {
   .workspace-grid {
-    grid-template-columns: minmax(720px, 1fr) minmax(720px, 1fr);
+    grid-template-columns: minmax(740px, 1fr) minmax(860px, 1fr);
   }
 }
 
@@ -925,7 +927,7 @@ th {
 
   .preview-stage {
     height: 72vh;
-    min-height: 520px;
+    min-height: 560px;
   }
 }
 
@@ -992,8 +994,8 @@ th {
   }
 
   .invoice-actions {
-    grid-template-columns: repeat(3, minmax(54px, 1fr));
+    grid-template-columns: repeat(3, minmax(64px, 1fr));
     gap: 6px;
-    min-width: 174px;
+    min-width: 0;
   }
 }

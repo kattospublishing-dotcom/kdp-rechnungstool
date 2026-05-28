@@ -44,7 +44,9 @@ test("invoice tables fit without horizontal scrolling controls", () => {
 
 test("invoice action buttons stay side by side with animated styling", () => {
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
-  assert.match(cssSource, /\.invoice-actions[\s\S]*grid-template-columns: repeat\(3, minmax\(62px, 1fr\)\)/);
+  assert.match(cssSource, /\.invoice-actions[\s\S]*width: 100%/);
+  assert.match(cssSource, /\.invoice-actions[\s\S]*grid-template-columns: minmax\(78px, 1fr\) minmax\(78px, 1fr\) minmax\(92px, 1fr\)/);
+  assert.match(cssSource, /\.invoice-actions \.danger-button[\s\S]*min-width: 92px/);
   assert.match(cssSource, /\.file-link:hover[\s\S]*transform: translateY\(-1px\)/);
   assert.match(cssSource, /\.danger-button:hover[\s\S]*transform: translateY\(-1px\)/);
   assert.match(cssSource, /linear-gradient/);
@@ -107,11 +109,11 @@ test("preview pane can be docked outside the main workflow", () => {
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
   assert.match(appSource, /className="workspace-grid"/);
   assert.match(appSource, /className="main-flow"/);
-  assert.match(cssSource, /\.workspace-grid[\s\S]*width: min\(1720px, calc\(100% - 32px\)\)/);
-  assert.match(cssSource, /\.workspace-grid[\s\S]*grid-template-columns: minmax\(740px, 0\.9fr\) minmax\(740px, 1\.1fr\)/);
+  assert.match(cssSource, /\.workspace-grid[\s\S]*width: min\(1780px, calc\(100% - 32px\)\)/);
+  assert.match(cssSource, /\.workspace-grid[\s\S]*grid-template-columns: minmax\(760px, 0\.9fr\) minmax\(920px, 1\.1fr\)/);
   assert.match(cssSource, /\.preview-panel[\s\S]*position: static/);
   assert.doesNotMatch(cssSource, /\.preview-panel \{[\s\S]*position: sticky/);
-  assert.match(cssSource, /\.preview-stage[\s\S]*height: clamp\(560px, 68vh, 720px\)/);
+  assert.match(cssSource, /\.preview-stage[\s\S]*height: clamp\(660px, 74vh, 760px\)/);
   assert.match(cssSource, /\.payments-table th:nth-child\(5\)[\s\S]*width: 28%/);
-  assert.match(cssSource, /@media \(max-width: 1520px\)[\s\S]*\.workspace-grid[\s\S]*grid-template-columns: minmax\(720px, 1fr\) minmax\(720px, 1fr\)/);
+  assert.match(cssSource, /@media \(max-width: 1700px\)[\s\S]*\.workspace-grid[\s\S]*grid-template-columns: minmax\(740px, 1fr\) minmax\(860px, 1fr\)/);
 });
