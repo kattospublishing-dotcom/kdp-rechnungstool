@@ -250,6 +250,8 @@ test("GET /api/invoices/:invoiceId/preview returns an inline invoice preview", a
     assert.match(previewResponse.headers.get("content-type"), /text\/html/);
     assert.match(html, /Rechnungs-Nr\.: RE202614/);
     assert.match(html, /20,12 EUR/);
+    assert.match(html, /body \{[\s\S]*overflow: hidden/);
+    assert.match(html, /\.page \{[\s\S]*height: 1123px/);
   } finally {
     server.close();
   }

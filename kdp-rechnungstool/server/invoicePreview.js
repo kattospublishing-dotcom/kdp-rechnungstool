@@ -7,8 +7,8 @@ export function createInvoicePreviewHtml({ invoice, payment, customer }) {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { margin: 0; background: #eef2f7; font-family: "Avenir Book", "Segoe UI", Arial, sans-serif; }
-    .page { width: 794px; min-height: 1123px; margin: 0 auto; background: #fff; color: #050b16; padding: 72px; box-sizing: border-box; }
+    html, body { width: 794px; height: 1123px; margin: 0; overflow: hidden; background: #fff; font-family: "Avenir Book", "Segoe UI", Arial, sans-serif; }
+    .page { width: 794px; height: 1123px; margin: 0; overflow: hidden; background: #fff; color: #050b16; padding: 72px; box-sizing: border-box; }
     .top { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
     .customer, .sender { line-height: 1.45; font-size: 15px; }
     .customer strong { font-weight: 800; }

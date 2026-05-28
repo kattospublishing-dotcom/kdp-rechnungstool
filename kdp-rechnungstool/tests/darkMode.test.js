@@ -60,6 +60,19 @@ test("app exposes organized dashboard and invoice preview pane", () => {
   assert.match(cssSource, /\.invoice-preview/);
 });
 
+test("invoice preview fits the full page and exposes icon zoom controls", () => {
+  const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(appSource, /const PREVIEW_PAGE_WIDTH = 794/);
+  assert.match(appSource, /const \[previewZoom, setPreviewZoom\]/);
+  assert.match(appSource, /aria-label="Vorschau verkleinern"/);
+  assert.match(appSource, /aria-label="Vorschau vergroessern"/);
+  assert.match(appSource, /scrolling="no"/);
+  assert.match(cssSource, /\.preview-stage[\s\S]*overflow: auto/);
+  assert.match(cssSource, /\.preview-paper[\s\S]*transform: scale\(var\(--preview-scale\)\)/);
+  assert.match(cssSource, /\.zoom-button/);
+});
+
 test("app exposes invoice review queue with confetti approval", () => {
   const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");

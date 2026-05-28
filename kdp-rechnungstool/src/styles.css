@@ -444,6 +444,12 @@ textarea:focus {
   fill: currentColor;
 }
 
+.button-icon {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
 .secondary-button:disabled {
   cursor: not-allowed;
   opacity: 0.48;
@@ -459,13 +465,86 @@ textarea:focus {
   min-height: calc(100vh - 132px);
 }
 
-.invoice-preview {
+.preview-panel .panel-title {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.zoom-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-panel-soft);
+  padding: 5px;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.zoom-button {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--color-secondary);
+  color: var(--color-secondary-text);
+  cursor: pointer;
+  transition: transform 160ms ease, color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.zoom-button:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(47, 129, 183, 0.24);
+  transform: translateY(-1px);
+}
+
+.zoom-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.preview-stage {
+  display: grid;
+  place-items: center;
   width: 100%;
   height: calc(100vh - 250px);
   min-height: 620px;
+  overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: #eef2f7;
+  background: #dfe6ef;
+  padding: 14px;
+}
+
+.preview-canvas {
+  position: relative;
+  width: var(--preview-width);
+  height: var(--preview-height);
+  flex: 0 0 auto;
+}
+
+.preview-paper {
+  width: 794px;
+  height: 1123px;
+  transform: scale(var(--preview-scale));
+  transform-origin: top left;
+}
+
+.invoice-preview {
+  display: block;
+  width: 794px;
+  height: 1123px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.18);
 }
 
 .preview-empty {
@@ -831,7 +910,12 @@ th {
   }
 
   .invoice-preview {
-    height: 560px;
+    width: 794px;
+    height: 1123px;
+  }
+
+  .preview-stage {
+    height: 72vh;
     min-height: 520px;
   }
 }

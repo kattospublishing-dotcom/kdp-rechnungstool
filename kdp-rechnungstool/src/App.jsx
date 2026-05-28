@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiDelete, apiGet, apiPost } from "./api.js";
 import "./styles.css";
+
+const PREVIEW_PAGE_WIDTH = 794;
+const PREVIEW_PAGE_HEIGHT = 1123;
 
 const initialForm = {
   marketplaceCustomerId: "",
@@ -28,10 +31,13 @@ export default function App() {
   const [screenshotImporting, setScreenshotImporting] = useState(false);
   const [screenshotResult, setScreenshotResult] = useState(null);
   const [previewInvoiceId, setPreviewInvoiceId] = useState(null);
+  const [previewZoom, setPreviewZoom] = useState(1);
+  const [previewFitScale, setPreviewFitScale] = useState(0.48);
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [theme, setTheme] = useState(() => localStorage.getItem("kdp-theme") || "light");
+  const previewStageRef = useRef(null);
   const selectedCustomer = useMemo(
     () => customers.find((customer) => String(customer.id) === String(form.marketplaceCustomerId)),
     [customers, form.marketplaceCustomerId]
@@ -49,6 +55,18 @@ export default function App() {
 
   useEffect(() => {
     refreshData();
+  }, []);
+
+  useEffect(() => {
+    if (!previewStageRef.current) return undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.max(240, entry.contentRect.width - 28);
+      const height = Math.max(320, entry.contentRect.height - 28);
+      const fitScale = Math.min(width / PREVIEW_PAGE_WIDTH, height / PREVIEW_PAGE_HEIGHT, 1);
+      setPreviewFitScale(Number(fitScale.toFixed(4)));
+    });
+    observer.observe(previewStageRef.current);
+    return () => observer.disconnect();
   }, []);
 
   async function refreshData() {
@@ -168,6 +186,12 @@ export default function App() {
       setScreenshotImporting(false);
     }
   }
+
+  function changePreviewZoom(delta) {
+    setPreviewZoom((current) => Math.min(1.6, Math.max(0.75, Number((current + delta).toFixed(2)))));
+  }
+
+  const previewScale = Number((previewFitScale * previewZoom).toFixed(4));
 
   return (
     <main className="app-shell">
@@ -338,11 +362,39 @@ export default function App() {
 
         <aside className="panel preview-panel">
           <div className="panel-title">
-            <h2>Rechnungsvorschau</h2>
-            <p>{previewInvoice ? `${previewInvoice.invoice_number} direkt im Tool pruefen.` : "Noch keine Rechnung ausgewaehlt."}</p>
+            <div>
+              <h2>Rechnungsvorschau</h2>
+              <p>{previewInvoice ? `${previewInvoice.invoice_number} direkt im Tool pruefen.` : "Noch keine Rechnung ausgewaehlt."}</p>
+            </div>
+            <div className="zoom-controls" aria-label="Vorschau-Zoom">
+              <button className="zoom-button" type="button" aria-label="Vorschau verkleinern" onClick={() => changePreviewZoom(-0.1)} disabled={previewZoom <= 0.75}>
+                <MinusIcon />
+              </button>
+              <span>{Math.round(previewZoom * 100)}%</span>
+              <button className="zoom-button" type="button" aria-label="Vorschau vergroessern" onClick={() => changePreviewZoom(0.1)} disabled={previewZoom >= 1.6}>
+                <PlusIcon />
+              </button>
+            </div>
           </div>
           {previewInvoice ? (
-            <iframe className="invoice-preview" title={`Vorschau ${previewInvoice.invoice_number}`} src={`/api/invoices/${previewInvoice.id}/preview`} />
+            <div className="preview-stage" ref={previewStageRef}>
+              <div
+                className="preview-canvas"
+                style={{
+                  "--preview-width": `${PREVIEW_PAGE_WIDTH * previewScale}px`,
+                  "--preview-height": `${PREVIEW_PAGE_HEIGHT * previewScale}px`
+                }}
+              >
+                <div className="preview-paper" style={{ "--preview-scale": previewScale }}>
+                  <iframe
+                    className="invoice-preview"
+                    title={`Vorschau ${previewInvoice.invoice_number}`}
+                    src={`/api/invoices/${previewInvoice.id}/preview`}
+                    scrolling="no"
+                  />
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="preview-empty">Sobald eine Rechnung erzeugt wurde, erscheint hier die Vorschau.</div>
           )}
@@ -507,6 +559,22 @@ function ThemeIcon({ mode }) {
       ) : (
         <path d="M20.2 14.6A8.2 8.2 0 0 1 9.4 3.8a.8.8 0 0 0-.86-1.21 10 10 0 1 0 12.87 12.87.8.8 0 0 0-1.21-.86Z" />
       )}
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg className="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M11 5a1 1 0 1 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5Z" />
+    </svg>
+  );
+}
+
+function MinusIcon() {
+  return (
+    <svg className="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 11h14a1 1 0 1 1 0 2H5a1 1 0 1 1 0-2Z" />
     </svg>
   );
 }
