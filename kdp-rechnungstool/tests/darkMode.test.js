@@ -22,3 +22,9 @@ test("invoice history links to Word download instead of showing local path", () 
   assert.match(appSource, /Word-Datei/);
   assert.doesNotMatch(appSource, /output_docx_path/);
 });
+
+test("payment grid stacks before the table clips action buttons", () => {
+  const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(cssSource, /@media \(max-width: 1180px\)[\s\S]*\.work-grid[\s\S]*grid-template-columns: 1fr/);
+  assert.match(cssSource, /white-space: nowrap/);
+});

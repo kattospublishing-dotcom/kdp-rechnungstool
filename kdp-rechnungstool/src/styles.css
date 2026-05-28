@@ -256,6 +256,7 @@ textarea:focus {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .primary-button {
@@ -366,11 +367,13 @@ th {
   color: var(--color-primary-hover);
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1180px) {
   .work-grid {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 920px) {
   .topbar {
     display: grid;
   }
