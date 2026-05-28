@@ -25,7 +25,8 @@ export const PAGE_GEOMETRY = {
   width: 11906,
   height: 16838,
   margin: 1080,
-  contentWidth: 9746
+  contentWidth: 9746,
+  footer: 1000
 };
 const BLUE = "115582";
 const BLACK = "000000";
@@ -79,7 +80,8 @@ export async function createInvoiceDocx({ outputPath, invoiceNumber, invoiceDate
               top: PAGE_GEOMETRY.margin,
               right: PAGE_GEOMETRY.margin,
               bottom: PAGE_GEOMETRY.margin,
-              left: PAGE_GEOMETRY.margin
+              left: PAGE_GEOMETRY.margin,
+              footer: PAGE_GEOMETRY.footer
             }
           }
         },
@@ -142,7 +144,7 @@ function headerBlock(customerLines) {
               ...senderLines().map((line, index) =>
                 new Paragraph({
                   alignment: AlignmentType.RIGHT,
-                  spacing: { after: index === 5 ? 260 : 40 },
+                  spacing: { after: index === 4 ? 200 : 40 },
                   children: [new TextRun({ text: line, font: "Avenir Book", size: 20, color: line.includes("@") ? "0563C1" : BLACK })]
                 })
               )
@@ -161,7 +163,6 @@ function senderLines() {
     "2822 Bad Erlach",
     "Tel +436703588425",
     "kattospublishing@gmail.com",
-    "",
     "UID: ATU81259102"
   ];
 }

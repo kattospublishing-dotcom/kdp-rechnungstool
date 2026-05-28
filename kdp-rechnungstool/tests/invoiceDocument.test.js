@@ -18,7 +18,8 @@ test("uses one shared right edge for invoice page content", () => {
     width: 11906,
     height: 16838,
     margin: 1080,
-    contentWidth: 9746
+    contentWidth: 9746,
+    footer: 1000
   });
 });
 
