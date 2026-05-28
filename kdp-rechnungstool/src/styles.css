@@ -18,6 +18,7 @@
   --color-gold: #b7791f;
   --color-red: #be123c;
   --shadow-panel: 0 16px 36px rgba(15, 23, 42, 0.08);
+  --dashboard-width: 1380px;
   color: var(--color-text);
   background: var(--color-bg);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -141,7 +142,7 @@ button {
 .workspace-grid,
 .history-panel,
 .import-panel {
-  width: min(1780px, calc(100% - 32px));
+  width: min(var(--dashboard-width), calc(100% - 32px));
   margin: 18px auto 0;
 }
 
@@ -154,7 +155,7 @@ button {
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(760px, 0.9fr) minmax(920px, 1.1fr);
+  grid-template-columns: minmax(600px, 0.82fr) minmax(760px, 1.18fr);
   gap: 18px;
   align-items: start;
 }
@@ -512,8 +513,8 @@ textarea:focus {
   display: grid;
   place-items: center;
   width: 100%;
-  height: clamp(660px, 74vh, 760px);
-  min-height: 660px;
+  height: clamp(640px, 72vh, 760px);
+  min-height: 640px;
   overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -795,27 +796,27 @@ th {
 
 .history-table th:nth-child(6),
 .history-table td:nth-child(6) {
-  width: 28%;
+  width: 20%;
 }
 
 .review-table th:nth-child(1),
 .review-table td:nth-child(1) {
-  width: 13%;
+  width: 11%;
 }
 
 .review-table th:nth-child(2),
 .review-table td:nth-child(2) {
-  width: 14%;
+  width: 13%;
 }
 
 .review-table th:nth-child(3),
 .review-table td:nth-child(3) {
-  width: 16%;
+  width: 15%;
 }
 
 .review-table th:nth-child(4),
 .review-table td:nth-child(4) {
-  width: 18%;
+  width: 28%;
 }
 
 .review-table th:nth-child(5),
@@ -825,24 +826,24 @@ th {
 
 .review-table th:nth-child(6),
 .review-table td:nth-child(6) {
-  width: 28%;
+  width: 20%;
 }
 
 .invoice-actions {
-  display: grid;
-  width: 100%;
-  grid-template-columns: minmax(78px, 1fr) minmax(78px, 1fr) minmax(92px, 1fr);
-  gap: 8px;
+  display: inline-grid;
+  width: max-content;
+  grid-template-columns: repeat(3, max-content);
+  gap: 7px;
   align-items: center;
   min-width: 0;
 }
 
 .invoice-actions .file-link,
 .invoice-actions .danger-button {
-  width: 100%;
-  min-width: 92px;
+  width: auto;
+  min-width: 96px;
   min-height: 34px;
-  padding: 7px 8px;
+  padding: 7px 11px;
   font-size: 12px;
 }
 
@@ -898,12 +899,6 @@ th {
   100% {
     opacity: 0;
     transform: translate3d(calc(((var(--i) % 5) - 2) * 28px), 92vh, 0) rotate(540deg);
-  }
-}
-
-@media (max-width: 1700px) {
-  .workspace-grid {
-    grid-template-columns: minmax(740px, 1fr) minmax(860px, 1fr);
   }
 }
 
@@ -994,7 +989,7 @@ th {
   }
 
   .invoice-actions {
-    grid-template-columns: repeat(3, minmax(64px, 1fr));
+    grid-template-columns: repeat(3, max-content);
     gap: 6px;
     min-width: 0;
   }
