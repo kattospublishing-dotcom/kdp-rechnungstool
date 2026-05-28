@@ -40,6 +40,14 @@ test("invoice tables fit without horizontal scrolling controls", () => {
   assert.doesNotMatch(cssSource, /min-width: 700px/);
 });
 
+test("invoice action buttons stay side by side with animated styling", () => {
+  const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(cssSource, /\.invoice-actions[\s\S]*grid-template-columns: repeat\(2, minmax\(74px, 1fr\)\)/);
+  assert.match(cssSource, /\.file-link:hover[\s\S]*transform: translateY\(-1px\)/);
+  assert.match(cssSource, /\.danger-button:hover[\s\S]*transform: translateY\(-1px\)/);
+  assert.match(cssSource, /linear-gradient/);
+});
+
 test("app exposes invoice review queue with confetti approval", () => {
   const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");

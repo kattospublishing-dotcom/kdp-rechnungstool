@@ -258,6 +258,7 @@ textarea:focus {
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
 .primary-button {
@@ -275,8 +276,17 @@ textarea:focus {
 }
 
 .danger-button {
-  background: #fee2e2;
-  color: #991b1b;
+  background: linear-gradient(135deg, #fff1f2, #fee2e2);
+  color: #9f1239;
+  border: 1px solid #fecdd3;
+  box-shadow: 0 6px 14px rgba(159, 18, 57, 0.08);
+}
+
+.danger-button:hover {
+  background: linear-gradient(135deg, #ffe4e6, #fecdd3);
+  border-color: #fda4af;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(159, 18, 57, 0.16);
 }
 
 .theme-toggle {
@@ -358,20 +368,25 @@ th {
   align-items: center;
   justify-content: center;
   min-height: 34px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #bfdbfe;
   border-radius: 6px;
-  background: var(--color-panel-soft);
-  color: var(--color-text);
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  color: #1d4ed8;
+  box-shadow: 0 6px 14px rgba(29, 78, 216, 0.08);
   padding: 7px 11px;
   font-size: 13px;
   font-weight: 750;
   text-decoration: none;
   white-space: nowrap;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
 .file-link:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary-hover);
+  border-color: #93c5fd;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(29, 78, 216, 0.16);
 }
 
 .payments-table th:nth-child(1),
@@ -416,7 +431,7 @@ th {
 
 .history-table th:nth-child(4),
 .history-table td:nth-child(4) {
-  width: 22%;
+  width: 20%;
 }
 
 .history-table th:nth-child(5),
@@ -426,7 +441,7 @@ th {
 
 .history-table th:nth-child(6),
 .history-table td:nth-child(6) {
-  width: 22%;
+  width: 24%;
 }
 
 .review-table th:nth-child(1),
@@ -446,7 +461,7 @@ th {
 
 .review-table th:nth-child(4),
 .review-table td:nth-child(4) {
-  width: 22%;
+  width: 20%;
 }
 
 .review-table th:nth-child(5),
@@ -456,13 +471,23 @@ th {
 
 .review-table th:nth-child(6),
 .review-table td:nth-child(6) {
-  width: 22%;
+  width: 24%;
 }
 
 .invoice-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(74px, 1fr));
   gap: 8px;
-  flex-wrap: wrap;
+  align-items: center;
+  min-width: 158px;
+}
+
+.invoice-actions .file-link,
+.invoice-actions .danger-button {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 9px;
+  font-size: 12px;
 }
 
 .review-check {
@@ -563,9 +588,14 @@ th {
   }
 
   .secondary-button,
-  .danger-button,
   .file-link {
     width: 100%;
     padding-inline: 8px;
+  }
+
+  .invoice-actions {
+    grid-template-columns: repeat(2, minmax(64px, 1fr));
+    gap: 6px;
+    min-width: 136px;
   }
 }
