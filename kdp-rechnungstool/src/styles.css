@@ -518,7 +518,7 @@ textarea:focus {
   place-items: center;
   width: 100%;
   height: auto;
-  min-height: clamp(790px, 68vh, 1010px);
+  min-height: clamp(770px, 66vh, 990px);
   overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: 8px;
