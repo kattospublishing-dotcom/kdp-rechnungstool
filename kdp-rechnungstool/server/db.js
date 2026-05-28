@@ -5,11 +5,56 @@ const DEFAULT_CUSTOMERS = [
   {
     marketplace: "amazon.de",
     displayName: "Amazon.de",
-    companyName: "Amazon Media EU S.a r.l. (Societe a responsabilite limitee)",
+    companyName: "Amazon Media EU S.àr.l. (Société à responsabilité limitée)",
     addressLines: ["38 avenue John F. Kennedy", "L-1855 Luxembourg"],
     taxLabel: "VAT-No.",
     taxId: "LU 20944528",
     serviceDescription: "KDP Bücher-Honorare amazon.de"
+  },
+  {
+    marketplace: "amazon.fr",
+    displayName: "Amazon.fr",
+    companyName: "Amazon Media EU S.àr.l. (Société à responsabilité limitée)",
+    addressLines: ["38 avenue John F. Kennedy", "L-1855 Luxembourg"],
+    taxLabel: "VAT-No.",
+    taxId: "LU 20944528",
+    serviceDescription: "KDP Bücher-Honorare amazon.fr"
+  },
+  {
+    marketplace: "amazon.es",
+    displayName: "Amazon.es",
+    companyName: "Amazon Media EU S.àr.l. (Société à responsabilité limitée)",
+    addressLines: ["38 avenue John F. Kennedy", "L-1855 Luxembourg"],
+    taxLabel: "VAT-No.",
+    taxId: "LU 20944528",
+    serviceDescription: "KDP Bücher-Honorare amazon.es"
+  },
+  {
+    marketplace: "amazon.co.uk",
+    displayName: "Amazon.co.uk",
+    companyName: "Amazon Media EU S.àr.l. (Société à responsabilité limitée)",
+    addressLines: ["38 avenue John F. Kennedy", "L-1855 Luxembourg"],
+    taxLabel: "VAT-No.",
+    taxId: "LU 20944528",
+    serviceDescription: "KDP Bücher-Honorare amazon.co.uk"
+  },
+  {
+    marketplace: "amazon.nl",
+    displayName: "Amazon.nl",
+    companyName: "Amazon Media EU S.àr.l. (Société à responsabilité limitée)",
+    addressLines: ["38 avenue John F. Kennedy", "L-1855 Luxembourg"],
+    taxLabel: "VAT-No.",
+    taxId: "LU 20944528",
+    serviceDescription: "KDP Bücher-Honorare amazon.nl"
+  },
+  {
+    marketplace: "amazon.it",
+    displayName: "Amazon.it",
+    companyName: "Amazon Media EU S.àr.l. (Société à responsabilité limitée)",
+    addressLines: ["38 avenue John F. Kennedy", "L-1855 Luxembourg"],
+    taxLabel: "VAT-No.",
+    taxId: "LU 20944528",
+    serviceDescription: "KDP Bücher-Honorare amazon.it"
   },
   {
     marketplace: "amazon.com",
@@ -30,13 +75,36 @@ const DEFAULT_CUSTOMERS = [
     serviceDescription: "KDP Bücher-Honorare amazon.ca"
   },
   {
-    marketplace: "amazon.co.uk",
-    displayName: "Amazon.co.uk",
-    companyName: "Amazon Media EU S.a r.l. UK Branch",
-    addressLines: ["1 Principal Place", "Worship Street", "London EC2A 2FA", "United Kingdom"],
-    taxLabel: "VAT-No.",
-    taxId: "",
-    serviceDescription: "KDP Bücher-Honorare amazon.co.uk"
+    marketplace: "amazon.com.au",
+    displayName: "Amazon.com.au",
+    companyName: "Amazon Australia Services, Inc.",
+    addressLines: ["410 Terry Avenue North", "Seattle, WA 98109", "United States"],
+    taxLabel: "Tax ID",
+    taxId: "46-2971461",
+    serviceDescription: "KDP Bücher-Honorare amazon.com.au"
+  },
+  {
+    marketplace: "amazon.com.br",
+    displayName: "Amazon.com.br",
+    companyName: "Amazon Serviços de Varejo do Brasil Ltda.",
+    addressLines: [
+      "Av. Presidente JuscelinoKubitscheck, 2041 – Torre E – 18º andar",
+      "São Paulo – SP",
+      "CEP: 04543-000",
+      "Brazil"
+    ],
+    taxLabel: "Tax ID",
+    taxId: "98-1204075",
+    serviceDescription: "KDP Bücher-Honorare amazon.com.br"
+  },
+  {
+    marketplace: "amazon.com.mx",
+    displayName: "Amazon.com.mx",
+    companyName: "Amazon Mexico Services, Inc.",
+    addressLines: ["410 Terry Avenue North", "Seattle, WA 98109-5210", "United States"],
+    taxLabel: "Tax ID",
+    taxId: "46-2796183",
+    serviceDescription: "KDP Bücher-Honorare amazon.com.mx"
   }
 ];
 

@@ -22,7 +22,19 @@ test("GET /api/customers returns seeded marketplaces", async () => {
     const response = await fetch(`${baseUrl}/api/customers`);
     const customers = await response.json();
     assert.equal(response.status, 200);
-    assert.deepEqual(customers.map((row) => row.marketplace).sort(), ["amazon.ca", "amazon.co.uk", "amazon.com", "amazon.de"]);
+    assert.deepEqual(customers.map((row) => row.marketplace).sort(), [
+      "amazon.ca",
+      "amazon.co.uk",
+      "amazon.com",
+      "amazon.com.au",
+      "amazon.com.br",
+      "amazon.com.mx",
+      "amazon.de",
+      "amazon.es",
+      "amazon.fr",
+      "amazon.it",
+      "amazon.nl"
+    ]);
   } finally {
     server.close();
   }

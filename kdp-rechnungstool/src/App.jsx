@@ -183,6 +183,9 @@ export default function App() {
                 <option>USD</option>
                 <option>CAD</option>
                 <option>GBP</option>
+                <option>AUD</option>
+                <option>BRL</option>
+                <option>MXN</option>
               </select>
             </label>
             <label>
