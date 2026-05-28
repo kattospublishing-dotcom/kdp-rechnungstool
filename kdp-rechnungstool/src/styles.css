@@ -154,7 +154,7 @@ button {
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(720px, 880px);
+  grid-template-columns: minmax(740px, 0.9fr) minmax(740px, 1.1fr);
   gap: 18px;
   align-items: start;
 }
@@ -512,8 +512,8 @@ textarea:focus {
   display: grid;
   place-items: center;
   width: 100%;
-  height: min(58vh, 560px);
-  min-height: 460px;
+  height: clamp(560px, 68vh, 720px);
+  min-height: 560px;
   overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -741,27 +741,31 @@ th {
 
 .payments-table th:nth-child(1),
 .payments-table td:nth-child(1) {
-  width: 17%;
+  width: 16%;
 }
 
 .payments-table th:nth-child(2),
 .payments-table td:nth-child(2) {
-  width: 25%;
+  width: 24%;
 }
 
 .payments-table th:nth-child(3),
 .payments-table td:nth-child(3) {
-  width: 21%;
+  width: 19%;
 }
 
 .payments-table th:nth-child(4),
 .payments-table td:nth-child(4) {
-  width: 15%;
+  width: 13%;
 }
 
 .payments-table th:nth-child(5),
 .payments-table td:nth-child(5) {
-  width: 22%;
+  width: 28%;
+}
+
+.payments-table .secondary-button {
+  width: 100%;
 }
 
 .history-table th:nth-child(1),
@@ -892,6 +896,12 @@ th {
   100% {
     opacity: 0;
     transform: translate3d(calc(((var(--i) % 5) - 2) * 28px), 92vh, 0) rotate(540deg);
+  }
+}
+
+@media (max-width: 1520px) {
+  .workspace-grid {
+    grid-template-columns: minmax(720px, 1fr) minmax(720px, 1fr);
   }
 }
 
