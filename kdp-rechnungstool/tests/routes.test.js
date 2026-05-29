@@ -450,8 +450,57 @@ test("GET /api/stats returns marketplace totals and month comparison", async () 
       ["2026-01", 9],
       ["2026-02", 21]
     ]);
+    assert.equal(stats.selectedYear, 2026);
+    assert.deepEqual(stats.availableYears, [2026]);
+    assert.equal(stats.monthlySeries.length, 12);
+    assert.deepEqual(stats.monthlySeries.slice(0, 3).map((row) => [row.month, row.totalEur]), [
+      ["2026-01", 9],
+      ["2026-02", 21],
+      ["2026-03", 0]
+    ]);
     assert.equal(stats.latestMonth.month, "2026-02");
+    assert.equal(stats.latestMonth.previousMonth, "2026-01");
     assert.equal(stats.latestMonth.changeFromPreviousMonthPercent, 133.33);
+  } finally {
+    server.close();
+  }
+});
+
+test("GET /api/stats omits month change when previous calendar month has no revenue", async () => {
+  const { app, db } = createTestServer();
+  const server = app.listen(0);
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const amazonCom = db.prepare("select * from marketplace_customers where marketplace = ?").get("amazon.com");
+
+  try {
+    const now = new Date().toISOString();
+    db.prepare(`
+      insert into payment_records (
+        marketplace_customer_id,
+        payment_number,
+        sales_period_start,
+        sales_period_end,
+        payment_date,
+        original_currency,
+        original_amount,
+        exchange_rate,
+        confirmed_eur_amount,
+        status,
+        notes,
+        created_at,
+        updated_at
+      )
+      values (?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', '', ?, ?)
+    `).run(amazonCom.id, "p-mar", "2026-03-01", "2026-03-31", "2026-05-29", "USD", 22.42, 0.8599, 19.28, now, now);
+
+    const response = await fetch(`${baseUrl}/api/stats?year=2026`);
+    const stats = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(stats.latestMonth.month, "2026-03");
+    assert.equal(stats.latestMonth.previousMonth, "2026-02");
+    assert.equal(stats.latestMonth.previousMonthEur, 0);
+    assert.equal(stats.latestMonth.changeFromPreviousMonthPercent, null);
   } finally {
     server.close();
   }

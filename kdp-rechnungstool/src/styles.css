@@ -659,6 +659,25 @@ th {
   gap: 16px;
 }
 
+.analytics-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.analytics-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.analytics-actions select {
+  width: 110px;
+}
+
 .analytics-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -685,12 +704,85 @@ th {
   font-size: 22px;
 }
 
+.analytics-card small {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
 .trend-positive {
   color: var(--color-green) !important;
 }
 
 .trend-negative {
   color: var(--color-red) !important;
+}
+
+.monthly-chart {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-panel-soft);
+  padding: 14px;
+}
+
+.monthly-chart-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.monthly-chart-head h3 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 15px;
+}
+
+.monthly-chart-head span {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.monthly-bars {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 8px;
+  min-height: 180px;
+}
+
+.monthly-bar {
+  display: grid;
+  grid-template-rows: auto minmax(108px, 1fr) auto;
+  gap: 7px;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 12px;
+  text-align: center;
+}
+
+.monthly-bar div {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--color-secondary) 78%, transparent);
+  overflow: hidden;
+}
+
+.monthly-bar i {
+  display: block;
+  width: 100%;
+  border-radius: 7px 7px 0 0;
+  background: linear-gradient(180deg, var(--color-green), var(--color-accent));
+  animation: bar-grow-vertical 520ms ease-out both;
+}
+
+.monthly-bar strong {
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
 }
 
 .country-chart {
@@ -741,6 +833,18 @@ th {
   to {
     transform: scaleX(1);
     transform-origin: left;
+  }
+}
+
+@keyframes bar-grow-vertical {
+  from {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+
+  to {
+    transform: scaleY(1);
+    transform-origin: bottom;
   }
 }
 

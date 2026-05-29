@@ -99,11 +99,14 @@ test("app exposes screenshot upload import", () => {
 test("app exposes analytics cards and country revenue chart", () => {
   const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   const cssSource = fs.readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
-  assert.match(appSource, /apiGet\("\/stats"\)/);
+  assert.match(appSource, /apiGet\(`\/stats\?year=\$\{statsYear\}`\)/);
   assert.match(appSource, /Einnahmen nach Laendern/);
   assert.match(appSource, /Umsatz zum Vormonat/);
+  assert.match(appSource, /Monatskurve anzeigen/);
+  assert.match(appSource, /Leistungsmonat/);
   assert.match(cssSource, /\.analytics-grid/);
   assert.match(cssSource, /\.country-bar/);
+  assert.match(cssSource, /\.monthly-chart/);
 });
 
 test("preview pane can be docked outside the main workflow", () => {

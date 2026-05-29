@@ -36,6 +36,7 @@ export function createRouter(db) {
   });
 
   router.get("/stats", (req, res) => {
+    const requestedYear = Number(req.query.year);
     const rows = db.prepare(`
       select
         c.display_name,
@@ -48,9 +49,16 @@ export function createRouter(db) {
       order by month asc, c.display_name asc
     `).all();
 
+    const availableYears = [...new Set(rows.map((row) => Number(String(row.month).slice(0, 4))))]
+      .filter(Boolean)
+      .sort((a, b) => a - b);
+    const selectedYear = Number.isInteger(requestedYear) && availableYears.includes(requestedYear)
+      ? requestedYear
+      : availableYears.at(-1) ?? new Date().getFullYear();
+    const selectedRows = rows.filter((row) => Number(String(row.month).slice(0, 4)) === selectedYear);
     const marketplaceTotals = new Map();
     const monthTotals = new Map();
-    for (const row of rows) {
+    for (const row of selectedRows) {
       marketplaceTotals.set(row.display_name, roundMoney((marketplaceTotals.get(row.display_name) ?? 0) + row.total_eur));
       monthTotals.set(row.month, roundMoney((monthTotals.get(row.month) ?? 0) + row.total_eur));
     }
@@ -64,18 +72,24 @@ export function createRouter(db) {
       .sort((a, b) => a.month.localeCompare(b.month));
 
     const latest = months.at(-1) ?? null;
-    const previous = months.at(-2) ?? null;
+    const monthlySeries = Array.from({ length: 12 }, (_, index) => {
+      const month = `${selectedYear}-${String(index + 1).padStart(2, "0")}`;
+      return {
+        month,
+        label: monthLabel(index),
+        totalEur: roundMoney(monthTotals.get(month) ?? 0)
+      };
+    });
     const latestMonth = latest
-      ? {
-          ...latest,
-          previousMonthEur: previous?.totalEur ?? 0,
-          changeFromPreviousMonthPercent: percentageChange(previous?.totalEur ?? 0, latest.totalEur)
-        }
+      ? buildLatestMonthSummary(latest, monthTotals)
       : null;
 
     res.json({
       byMarketplace,
       months,
+      monthlySeries,
+      selectedYear,
+      availableYears,
       latestMonth,
       yearTotalEur: roundMoney(months.reduce((sum, row) => sum + row.totalEur, 0))
     });
@@ -388,6 +402,27 @@ function roundMoney(value) {
 }
 
 function percentageChange(previousValue, currentValue) {
-  if (!previousValue) return currentValue ? 100 : 0;
+  if (!previousValue) return null;
   return Math.round(((currentValue - previousValue) / previousValue) * 10000) / 100;
+}
+
+function buildLatestMonthSummary(latest, monthTotals) {
+  const previousMonth = previousCalendarMonth(latest.month);
+  const previousMonthEur = roundMoney(monthTotals.get(previousMonth) ?? 0);
+  return {
+    ...latest,
+    previousMonth,
+    previousMonthEur,
+    changeFromPreviousMonthPercent: percentageChange(previousMonthEur, latest.totalEur)
+  };
+}
+
+function previousCalendarMonth(month) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const previous = new Date(Date.UTC(year, monthNumber - 2, 1));
+  return `${previous.getUTCFullYear()}-${String(previous.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthLabel(index) {
+  return ["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"][index];
 }

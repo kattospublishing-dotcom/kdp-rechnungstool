@@ -26,6 +26,7 @@ export default function App() {
   const [invoiceReviews, setInvoiceReviews] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [stats, setStats] = useState(null);
+  const [statsYear, setStatsYear] = useState(new Date().getFullYear());
   const [confettiBurst, setConfettiBurst] = useState(0);
   const [screenshotFile, setScreenshotFile] = useState(null);
   const [screenshotImporting, setScreenshotImporting] = useState(false);
@@ -55,7 +56,7 @@ export default function App() {
 
   useEffect(() => {
     refreshData();
-  }, []);
+  }, [statsYear]);
 
   useEffect(() => {
     if (!previewStageRef.current) return undefined;
@@ -76,7 +77,7 @@ export default function App() {
       apiGet("/payments"),
       apiGet("/invoice-reviews"),
       apiGet("/invoices"),
-      apiGet("/stats")
+      apiGet(`/stats?year=${statsYear}`)
     ]);
     setSettings(settingsData);
     setCustomers(customersData);
@@ -233,7 +234,7 @@ export default function App() {
             </section>
           )}
 
-          <AnalyticsPanel stats={stats} />
+          <AnalyticsPanel stats={stats} statsYear={statsYear} onYearChange={setStatsYear} />
 
           <section className="dashboard-grid">
             <div className="left-stack">
@@ -506,17 +507,37 @@ function Metric({ label, value }) {
   );
 }
 
-function AnalyticsPanel({ stats }) {
+function AnalyticsPanel({ stats, statsYear, onYearChange }) {
+  const [showMonthlyChart, setShowMonthlyChart] = useState(false);
   const countries = stats?.byMarketplace ?? [];
   const maxTotal = Math.max(1, ...countries.map((row) => row.totalEur));
-  const monthChange = stats?.latestMonth?.changeFromPreviousMonthPercent ?? 0;
-  const changeClass = monthChange >= 0 ? "trend-positive" : "trend-negative";
+  const monthlySeries = stats?.monthlySeries ?? [];
+  const maxMonthlyTotal = Math.max(1, ...monthlySeries.map((row) => row.totalEur));
+  const monthChange = stats?.latestMonth?.changeFromPreviousMonthPercent;
+  const changeClass = Number(monthChange) >= 0 ? "trend-positive" : "trend-negative";
+  const availableYears = stats?.availableYears?.length ? stats.availableYears : [statsYear];
 
   return (
     <section className="panel analytics-panel">
-      <div className="panel-title">
-        <h2>Statistik</h2>
-        <p>Einnahmen nach Laendern mit Entwicklung zum Vormonat.</p>
+      <div className="panel-title analytics-title">
+        <div>
+          <h2>Statistik</h2>
+          <p>Einnahmen nach Laendern nach Leistungsmonat.</p>
+        </div>
+        <div className="analytics-actions">
+          <select
+            aria-label="Statistikjahr"
+            value={stats?.selectedYear ?? statsYear}
+            onChange={(event) => onYearChange(Number(event.target.value))}
+          >
+            {availableYears.map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+          <button className="secondary-button" type="button" onClick={() => setShowMonthlyChart((current) => !current)}>
+            {showMonthlyChart ? "Monatskurve ausblenden" : "Monatskurve anzeigen"}
+          </button>
+        </div>
       </div>
       <div className="analytics-grid">
         <div className="analytics-card">
@@ -525,13 +546,39 @@ function AnalyticsPanel({ stats }) {
         </div>
         <div className="analytics-card">
           <span>Umsatz zum Vormonat</span>
-          <strong className={changeClass}>{formatPercent(monthChange)}</strong>
+          <strong className={monthChange === null || monthChange === undefined ? "" : changeClass}>
+            {monthChange === null || monthChange === undefined ? "Kein Vormonat" : formatPercent(monthChange)}
+          </strong>
+          <small>
+            {stats?.latestMonth
+              ? `${formatAmount(stats.latestMonth.previousMonthEur)} -> ${formatAmount(stats.latestMonth.totalEur)}`
+              : "Noch keine Monatsdaten"}
+          </small>
         </div>
         <div className="analytics-card">
-          <span>Aktueller Monat</span>
+          <span>Aktueller Leistungsmonat</span>
           <strong>{stats?.latestMonth?.month ?? "-"}</strong>
         </div>
       </div>
+      {showMonthlyChart && (
+        <div className="monthly-chart" aria-label="Einnahmen pro Monat">
+          <div className="monthly-chart-head">
+            <h3>Einnahmen pro Monat {stats?.selectedYear ?? statsYear}</h3>
+            <span>Januar bis Dezember</span>
+          </div>
+          <div className="monthly-bars">
+            {monthlySeries.map((row) => (
+              <div className="monthly-bar" key={row.month}>
+                <span>{row.label}</span>
+                <div>
+                  <i style={{ height: `${Math.max(6, (row.totalEur / maxMonthlyTotal) * 100)}%` }} />
+                </div>
+                <strong>{formatAmount(row.totalEur)}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="country-chart" aria-label="Einnahmen nach Laendern">
         <h3>Einnahmen nach Laendern</h3>
         {countries.length > 0 ? (
