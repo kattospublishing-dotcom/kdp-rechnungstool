@@ -22,3 +22,20 @@ test("parses KDP screenshot OCR text into payment rows", () => {
   assert.equal(rows[0].salesPeriodStart, "2026-02-01");
   assert.equal(rows[0].salesPeriodEnd, "2026-02-28");
 });
+
+test("parses wrapped German March sales period from OCR text", () => {
+  const rows = parseKdpScreenshotText(`
+100000057 824841 Amazon.de Bezahlt 2026-05-29 EFT EUR 9.15 N/A EUR 9.15
+Verkaufszeitraum Source Aufgelaufene Tantiemen Steuereinbehaltung Nettoeinnahmen
+01. M\u00e4rz 2026 - 31.
+M\u00e4rz 2026 Taschenbuchverk\u00e4ufe EUR 9.15 EUR 0.00 EUR 9.15
+100001198 573660 Amazon.ca Bezahlt 2026-05-29 EFT CAD 140.91 0.6206 EUR 87.45
+01. M\u00e4rz 2026 - 31.
+M\u00e4rz 2026 Taschenbuchverk\u00e4ufe CAD 140.91 CAD 0.00 CAD 140.91
+`);
+
+  assert.deepEqual(rows.map((row) => row.marketplace), ["amazon.de", "amazon.ca"]);
+  assert.equal(rows[0].salesPeriodStart, "2026-03-01");
+  assert.equal(rows[0].salesPeriodEnd, "2026-03-31");
+  assert.equal(rows[1].confirmedEurAmount, 87.45);
+});

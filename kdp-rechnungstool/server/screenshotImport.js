@@ -202,7 +202,7 @@ function parseSalesPeriod(text) {
     jan: 0,
     feb: 1,
     mar: 2,
-    mär: 2,
+    mrz: 2,
     apr: 3,
     may: 4,
     mai: 4,
@@ -216,12 +216,12 @@ function parseSalesPeriod(text) {
     dec: 11,
     dez: 11
   };
-  const match = /(\d{1,2})\.\s*([A-Za-zÄÖÜäöü]{3,})\.?\s*(20\d{2})\s*-\s*(\d{1,2})\.\s*([A-Za-zÄÖÜäöü]{3,})\.?\s*(20\d{2})/i.exec(text);
+  const match = /(\d{1,2})\.\s*(\p{L}{3,})\.?\s*(20\d{2})\s*-\s*(\d{1,2})\.\s*(\p{L}{3,})\.?\s*(20\d{2})/iu.exec(text);
   if (!match) {
     throw new Error("Verkaufszeitraum konnte im Screenshot nicht erkannt werden.");
   }
-  const startMonth = monthMap[match[2].slice(0, 3).toLowerCase()];
-  const endMonth = monthMap[match[5].slice(0, 3).toLowerCase()];
+  const startMonth = monthMap[normalizeMonthToken(match[2])];
+  const endMonth = monthMap[normalizeMonthToken(match[5])];
   if (startMonth === undefined || endMonth === undefined) {
     throw new Error("Monat im Verkaufszeitraum konnte nicht erkannt werden.");
   }
@@ -231,6 +231,14 @@ function parseSalesPeriod(text) {
   };
 }
 
+function normalizeMonthToken(value) {
+  return String(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z]/g, "")
+    .slice(0, 3);
+}
 function formatDate(year, monthIndex, day) {
   return `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
