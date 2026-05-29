@@ -17,6 +17,16 @@ test("stylesheet defines dark-mode theme tokens", () => {
   assert.match(cssSource, /--color-panel/);
 });
 
+test("app defines an invoice-tool favicon", () => {
+  const htmlSource = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const iconSource = fs.readFileSync(new URL("../public/favicon.svg", import.meta.url), "utf8");
+  assert.match(htmlSource, /rel="icon"/);
+  assert.match(htmlSource, /href="\/favicon\.svg"/);
+  assert.match(iconSource, /<svg/);
+  assert.match(iconSource, /rect/);
+  assert.match(iconSource, /circle/);
+});
+
 test("invoice history links to Word download instead of showing local path", () => {
   const appSource = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   assert.match(appSource, /href=\{`\/api\/invoices\/\$\{invoice\.id\}\/docx`\}/);
