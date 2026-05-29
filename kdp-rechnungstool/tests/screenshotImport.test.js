@@ -39,3 +39,26 @@ M\u00e4rz 2026 Taschenbuchverk\u00e4ufe CAD 140.91 CAD 0.00 CAD 140.91
   assert.equal(rows[0].salesPeriodEnd, "2026-03-31");
   assert.equal(rows[1].confirmedEurAmount, 87.45);
 });
+
+test("parses OCR period when end month is displaced and damaged", () => {
+  const rows = parseKdpScreenshotText(`
+«100000057 Amazon.de Bezahlt 2026-05-29 EFT EUR9.15 N/A EUR 9.15
+824841
+A laufi
+Verkaufszeitraum Source ufgel autene Steuereinbehaltung Nettoeinnahmen
+Tantiemen
+01. Mrz 2026 - 31. .
+. Taschenbuchverk&ufe EUR 9.15 EUR 0.00 EUR 9.15
+Mdrz 2026
+~ 100001198 Amazon.ca Bezahlt 2026-05-29 EFT CAD 140.91 0.6206 EUR 87.45
+573660
+01. Mrz 2026 - 31. .
+. Taschenbuchverk&ufe CAD 140.91 CAD 0.00 CAD 140.91
+Mdrz 2026
+`);
+
+  assert.deepEqual(rows.map((row) => row.marketplace), ["amazon.de", "amazon.ca"]);
+  assert.equal(rows[0].paymentNumber, "100000057824841");
+  assert.equal(rows[0].salesPeriodStart, "2026-03-01");
+  assert.equal(rows[0].salesPeriodEnd, "2026-03-31");
+});

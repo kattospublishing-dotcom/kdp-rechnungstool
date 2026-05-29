@@ -25,9 +25,8 @@ export function parseKdpScreenshotText(text) {
     const windowText = normalized.slice(start, end);
     const rowText = normalized.slice(match.index, end);
     const beforeMarketplace = normalized.slice(start, match.index);
-    const numbers = beforeMarketplace.match(/\d{6,}/g) ?? [];
-    const paymentNumber = numbers.slice(-2).join("") || numbers.at(-1);
     const paymentDate = firstMatch(rowText, /\b(20\d{2}-\d{2}-\d{2})\b/);
+    const paymentNumber = parsePaymentNumber({ beforeMarketplace, rowText, paymentDate });
     const eurAmount = firstNumberAfter(rowText, /\bEUR\s+([0-9]+(?:[.,][0-9]{2})?)\b/g, { last: true });
     const original = parseOriginalAmount(rowText);
     const exchangeRateText = firstMatch(rowText, /\b([0-9]+\.[0-9]{4})\b/);
@@ -197,6 +196,14 @@ function dedupeRows(rows) {
   });
 }
 
+function parsePaymentNumber({ beforeMarketplace, rowText, paymentDate }) {
+  const beforeNumbers = beforeMarketplace.match(/\d{6,}/g) ?? [];
+  const afterDate = paymentDate ? rowText.indexOf(paymentDate) + paymentDate.length : -1;
+  const afterHeaderText = afterDate > -1 ? rowText.slice(afterDate, Math.min(rowText.length, afterDate + 90)) : "";
+  const afterNumbers = afterHeaderText.match(/\b\d{5,}\b/g) ?? [];
+  return [...beforeNumbers.slice(-2), ...afterNumbers.slice(0, 1)].slice(0, 2).join("") || beforeNumbers.at(-1);
+}
+
 function parseSalesPeriod(text) {
   const monthMap = {
     jan: 0,
@@ -217,8 +224,20 @@ function parseSalesPeriod(text) {
     dez: 11
   };
   const match = /(\d{1,2})\.\s*(\p{L}{3,})\.?\s*(20\d{2})\s*-\s*(\d{1,2})\.\s*(\p{L}{3,})\.?\s*(20\d{2})/iu.exec(text);
+  const fallbackMatch = /(\d{1,2})\.\s*(\p{L}{3,})\.?\s*(20\d{2})\s*-\s*(\d{1,2})\.?/iu.exec(text);
   if (!match) {
-    throw new Error("Verkaufszeitraum konnte im Screenshot nicht erkannt werden.");
+    if (!fallbackMatch) {
+      throw new Error("Verkaufszeitraum konnte im Screenshot nicht erkannt werden.");
+    }
+    const month = monthMap[normalizeMonthToken(fallbackMatch[2])];
+    if (month === undefined) {
+      throw new Error("Monat im Verkaufszeitraum konnte nicht erkannt werden.");
+    }
+    const year = Number(fallbackMatch[3]);
+    return {
+      start: formatDate(year, month, Number(fallbackMatch[1])),
+      end: formatDate(year, month, Number(fallbackMatch[4]))
+    };
   }
   const startMonth = monthMap[normalizeMonthToken(match[2])];
   const endMonth = monthMap[normalizeMonthToken(match[5])];
